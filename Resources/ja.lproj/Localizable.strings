@@ -58,6 +58,8 @@
 "Press once" = "1回押す";
 "Double-press interval" = "2回押しの間隔";
 "When pressed once, the selected text is copied automatically first." = "1回押すモードでは、選択したテキストを自動的にコピーしてから翻訳します。";
+"⌘C ⌘C is detected from the clipboard, so it works even while Secure Keyboard Entry is on and needs no Accessibility permission." = "⌘C ⌘C はクリップボードの変化で検出するため、セキュリティキーボード入力が有効でも動作し、アクセシビリティ権限も不要です。";
+"Not needed for ⌘C ⌘C. Required only for other shortcuts." = "⌘C ⌘C には不要です。他のショートカットを使う場合のみ必要です。";
 "Hotkey & Window" = "ショートカット / ウインドウ";
 "Double ⌘C interval" = "⌘C 2回押しの間隔";
 "%.2fs" = "%.2f秒";

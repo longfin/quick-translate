@@ -26,8 +26,9 @@ DeepL 데스크톱 클라이언트처럼 **⌘C 를 두 번** 누르면 선택�
 ./build.sh --install  # /Applications 에 복사 후 실행
 ```
 
-첫 실행 시 **손쉬운 사용(Accessibility)** 권한을 요청합니다. 전역 키 입력(⌘C ⌘C)을 감지하려면 반드시 허용해야 합니다.
-시스템 설정 → 개인정보 보호 및 보안 → 손쉬운 사용 → QuickTranslate 켜기.
+기본 단축키 ⌘C ⌘C는 키보드 대신 **클립보드가 짧은 간격으로 두 번 바뀌는 것**을 감지하므로 **권한이 필요 없습니다.**
+다른 단축키를 고르면 **손쉬운 사용(Accessibility)** 권한을 요청하며(시스템 설정 → 개인정보 보호 및 보안 → 손쉬운 사용),
+허용하면 macOS가 키 이벤트를 전달하도록 앱이 한 번 자동 재시작됩니다.
 
 > ad-hoc 서명(기본값)은 빌드할 때마다 서명이 바뀌어 기존 손쉬운 사용 권한이 조용히 무효화됩니다
 > (목록에는 켜져 있는데 동작하지 않는 상태). `./build.sh --install` 은 설치 시 `tccutil reset` 으로
@@ -65,14 +66,17 @@ DeepL 데스크톱 클라이언트처럼 **⌘C 를 두 번** 누르면 선택�
 - **표시 언어**: 시스템 설정 따름 / English / 한국어 / 日本語 (바꾸면 앱이 다시 시작됨)
 - **단축키**: "변경…"을 누르고 원하는 조합을 누르면 됩니다(⌘·⌥·⌃ 중 하나 또는 펑션 키 필요). 실행 방식은
   **두 번 누르기**(기본 ⌘C ⌘C처럼 복사 단축키를 겹쳐 쓰는 방식)와 **한 번 누르기**(⌃⌥T 같은 전용 단축키.
-  앱이 ⌘C를 대신 보내 선택 텍스트를 복사하고, 그 키 입력은 아래 앱에 전달되지 않음) 중 선택
+  앱이 ⌘C를 대신 보내 선택 텍스트를 복사하고, 그 키 입력은 아래 앱에 전달되지 않음) 중 선택.
+  감지 방식: ⌘C ⌘C는 클립보드 변화(권한 불필요, 보안 입력 무관), 그 외 두 번 누르기는 CGEvent 탭(손쉬운 사용 권한),
+  한 번 누르기는 시스템 핫키 API
 - **두 번 누름 인식 간격**, **바깥 클릭 시 닫기**
 
 ## 단축키가 안 잡힐 때
 
-- **보안 키보드 입력(Secure Keyboard Entry)**: iTerm2, Ghostty, cmux 같은 터미널이나 암호 입력창이 이 기능을 켜면
-  macOS가 모든 앱의 전역 키 감시를 막습니다. 그 앱이 앞에 있는 동안은 ⌘C ⌘C가 동작하지 않습니다.
-  메뉴바 메뉴와 설정 창에 어느 앱이 켰는지 경고가 표시되니, 해당 앱 설정에서 끄거나 다른 앱에서 사용하세요.
+- **보안 키보드 입력(Secure Keyboard Entry)**: iTerm2, Ghostty, cmux 같은 터미널, 암호 입력창, 일부 Electron 앱이 이 기능을 켜면
+  macOS가 모든 앱의 전역 키 감시를 막고, 그 앱이 백그라운드에 있어도 유지되는 경우가 있습니다. 기본 ⌘C ⌘C는 클립보드로
+  감지하므로 영향이 없고, 한 번 누르기 단축키는 시스템 핫키 API를 씁니다. ⌘C가 아닌 조합을 두 번 누르는 설정만 키 이벤트에
+  의존하며, 이때는 메뉴바 메뉴와 설정 창에 어느 앱이 켰는지 표시됩니다.
 - **권한을 앱 실행 후에 허용한 경우**: macOS는 실행 시점의 권한으로 키 이벤트 전달 여부를 정하므로 앱이 자동으로 한 번 재시작합니다.
 
 ## 외부에서 번역창 열기
@@ -93,7 +97,9 @@ osascript -l JavaScript -e 'ObjC.import("Foundation"); $.NSDistributedNotificati
 
 ## 동작 방식
 
-- `NSEvent` 전역 키 모니터로 ⌘C 두 번을 감지하고, 클립보드 문자열을 읽어 플로팅 패널(`NSPanel`)을 마우스 근처에 띄웁니다.
+- ⌘C ⌘C는 `NSPasteboard.changeCount`를 60ms마다 확인해 감지합니다. 복사할 때마다 값이 오르므로 짧은 간격의 두 번 증가가
+  곧 두 번 복사입니다. 다른 단축키는 CGEvent 탭(두 번 누르기) 또는 `RegisterEventHotKey`(한 번 누르기)를 씁니다.
+  결과는 마우스 근처의 플로팅 패널(`NSPanel`)에 표시되며 현재 앱의 포커스를 뺏지 않습니다.
 - Claude: `claude -p --output-format stream-json --include-partial-messages --tools "" --strict-mcp-config --setting-sources ""`
   로 실행해 토큰 단위 스트리밍으로 결과를 표시합니다. 사용자 설정·훅·MCP 서버를 로드하지 않아 빠르게 뜨고,
   확장 사고(thinking)는 꺼둡니다(`MAX_THINKING_TOKENS=0`).
@@ -109,7 +115,9 @@ Sources/QuickTranslate/
   main.swift                 앱 진입점 (메뉴바 전용, Dock 아이콘 없음)
   AppDelegate.swift          상태 표시줄 메뉴, 권한 처리, 클립보드 번역 트리거
   Hotkey.swift               단축키 모델, 키 이름, ⌘C 자동 전송
-  HotkeyMonitor.swift        단축키 감지 (CGEvent 탭)
+  PasteboardWatcher.swift    클립보드 변화로 ⌘C ⌘C 감지
+  HotkeyMonitor.swift        그 외 두 번 누르기 감지 (CGEvent 탭)
+  CarbonHotkey.swift         한 번 누르기 단축키 (RegisterEventHotKey)
   TranslationPanel.swift     플로팅 패널 (위치, 바깥 클릭 닫기, Esc)
   TranslationView.swift      패널 UI (SwiftUI)
   TranslationViewModel.swift 번역 상태 / 스트리밍 반영

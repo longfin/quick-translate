@@ -58,6 +58,8 @@
 "Press once" = "한 번 누르기";
 "Double-press interval" = "두 번 누름 인식 간격";
 "When pressed once, the selected text is copied automatically first." = "한 번 누르기 모드에서는 선택한 텍스트를 자동으로 복사한 뒤 번역합니다.";
+"⌘C ⌘C is detected from the clipboard, so it works even while Secure Keyboard Entry is on and needs no Accessibility permission." = "⌘C ⌘C는 클립보드 변화로 감지하므로 보안 키보드 입력이 켜져 있어도 동작하고 손쉬운 사용 권한도 필요 없습니다.";
+"Not needed for ⌘C ⌘C. Required only for other shortcuts." = "⌘C ⌘C에는 필요 없습니다. 다른 단축키를 쓸 때만 필요합니다.";
 "Hotkey & Window" = "단축키 / 창";
 "Double ⌘C interval" = "⌘C 두 번 인식 간격";
 "%.2fs" = "%.2f초";

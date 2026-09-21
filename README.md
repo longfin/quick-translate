@@ -29,9 +29,10 @@ reporting, no API keys. Usage counts against your subscription like any other CL
 ./build.sh --install  # copies to /Applications and launches it
 ```
 
-On first launch the app asks for the **Accessibility** permission (System Settings → Privacy & Security →
-Accessibility). It is required to detect the global ⌘C ⌘C hotkey. If you grant it after the app has started,
-the app relaunches itself once so macOS starts delivering key events.
+With the default ⌘C ⌘C shortcut **no permission is needed**: the app notices two clipboard changes in quick
+succession instead of watching the keyboard. Other shortcuts need the **Accessibility** permission (System
+Settings → Privacy & Security → Accessibility); the app asks for it when you pick one, and relaunches itself
+once it is granted so macOS starts delivering key events.
 
 > With plain ad-hoc signing every rebuild changes the signature and silently invalidates the permission
 > (the switch looks on but nothing works). `./build.sh --install` clears the stale entry so you get asked
@@ -68,15 +69,18 @@ Menu bar icon → **Settings…**
 - **Shortcut**: click "Change…" and press any combination (needs ⌘, ⌥ or ⌃, or a function key). Two trigger
   modes: **Press twice** (the default ⌘C ⌘C style, where the shortcut is also the app's copy command) or
   **Press once** (a dedicated shortcut such as ⌃⌥T; the app sends ⌘C for you to copy the selection, and the
-  keystroke is not passed on to the app underneath)
+  keystroke is not passed on to the app underneath). How each is detected: ⌘C ⌘C from clipboard changes
+  (no permission, immune to Secure Keyboard Entry), other press-twice shortcuts via a CGEvent tap
+  (Accessibility), press-once shortcuts via the system hot key API
 - **Double-press interval**, **Close when clicking outside**
 
 ## When the hotkey does not fire
 
-- **Secure Keyboard Entry**: terminals (iTerm2, Ghostty, cmux, …) and password fields turn this on, and macOS
-  then blocks global key monitoring for every app. The menu bar menu and the Settings window show which
-  app has it enabled. Turn it off in that app or use the hotkey from another app. If an app quits without
-  releasing it, the state can get stuck; locking and unlocking the screen resets it.
+- **Secure Keyboard Entry**: terminals (iTerm2, Ghostty, cmux, …), password fields and some Electron apps turn
+  this on, and macOS then blocks global key monitoring for every app, sometimes even while that app is in the
+  background. The default ⌘C ⌘C shortcut is immune because it is detected from the clipboard, and single-press
+  shortcuts use the system hot key API. Only "press twice" shortcuts other than ⌘C depend on key events; for
+  those the menu bar menu and Settings show which app has Secure Keyboard Entry enabled.
 - **Permission granted after launch**: macOS decides at launch whether a process receives key events, so the
   app relaunches itself automatically once the permission appears.
 
@@ -98,8 +102,10 @@ language, create `Resources/<lang>.lproj/Localizable.strings` (keys are the Engl
 
 ## How it works
 
-- A CGEvent tap watches for two ⌘C key-downs in quick succession, reads the clipboard string and shows a
-  non-activating floating `NSPanel` near the mouse. The panel never steals focus from the app you are in.
+- ⌘C ⌘C is detected by polling `NSPasteboard.changeCount` every 60 ms: every copy bumps it, so two bumps
+  within the interval mean a double copy. Other shortcuts use a CGEvent tap (press twice) or
+  `RegisterEventHotKey` (press once). The result is shown in a non-activating floating `NSPanel` near the
+  mouse that never steals focus from the app you are in.
 - Claude: runs `claude -p --output-format stream-json --include-partial-messages --tools "" --strict-mcp-config --setting-sources ""`
   and streams tokens into the panel. The flags skip your user settings, hooks and MCP servers so it starts fast
   and sends only a few hundred input tokens. Extended thinking is disabled (`MAX_THINKING_TOKENS=0`).
@@ -116,7 +122,9 @@ Sources/QuickTranslate/
   main.swift                 entry point (menu bar only, no Dock icon)
   AppDelegate.swift          status item menu, permission flow, clipboard trigger, auto-relaunch
   Hotkey.swift               shortcut model, key labels, synthetic ⌘C
-  HotkeyMonitor.swift        shortcut detection (CGEvent tap)
+  PasteboardWatcher.swift    ⌘C ⌘C detection from clipboard changes
+  HotkeyMonitor.swift        press-twice detection for other shortcuts (CGEvent tap)
+  CarbonHotkey.swift         press-once shortcuts (RegisterEventHotKey)
   SecureInput.swift          Secure Keyboard Entry detection
   TranslationPanel.swift     floating panel (placement, outside-click close, Esc)
   TranslationView.swift      panel UI (SwiftUI)

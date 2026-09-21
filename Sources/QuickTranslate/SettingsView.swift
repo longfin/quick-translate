@@ -75,6 +75,10 @@ struct SettingsView: View {
                     Text("Press once").tag(false)
                 }
                 .pickerStyle(.segmented)
+                if settings.hotkey.isCopyDoublePress {
+                    Text("⌘C ⌘C is detected from the clipboard, so it works even while Secure Keyboard Entry is on and needs no Accessibility permission.")
+                        .font(.caption).foregroundColor(.secondary)
+                }
                 if settings.hotkey.doublePress {
                     HStack {
                         Text("Double-press interval")
@@ -96,15 +100,17 @@ struct SettingsView: View {
                         .foregroundColor(accessibilityGranted ? .green : .red)
                     if accessibilityGranted {
                         Text("Accessibility permission granted.")
-                    } else {
+                    } else if settings.hotkey.needsAccessibility {
                         Text("Accessibility permission is required for the global hotkey.")
+                    } else {
+                        Text("Not needed for ⌘C ⌘C. Required only for other shortcuts.")
                     }
                     Spacer()
-                    if !accessibilityGranted {
+                    if !accessibilityGranted && settings.hotkey.needsAccessibility {
                         Button("Open System Settings") { openAccessibilitySettings() }
                     }
                 }
-                if let warning = secureInputWarning {
+                if settings.hotkey.dependsOnKeyEvents, let warning = secureInputWarning {
                     HStack(alignment: .top) {
                         Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.orange)
                         Text(verbatim: warning + " " + L("Turn off Secure Keyboard Entry in that app, or use the hotkey from another app."))

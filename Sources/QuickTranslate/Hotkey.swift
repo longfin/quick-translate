@@ -8,6 +8,15 @@ struct HotkeyConfig: Equatable {
     var doublePress: Bool = true
 
     static let `default` = HotkeyConfig()
+
+    /// ⌘C pressed twice: detected from the pasteboard, so no key monitoring (and no permission) is needed.
+    var isCopyDoublePress: Bool { doublePress && keyCode == UInt16(kVK_ANSI_C) && flags == .maskCommand }
+
+    /// Whether this configuration needs the Accessibility permission (event tap or synthetic ⌘C).
+    var needsAccessibility: Bool { !isCopyDoublePress }
+
+    /// Whether this configuration is blocked by Secure Keyboard Entry (event tap based).
+    var dependsOnKeyEvents: Bool { doublePress && !isCopyDoublePress }
     static let modifierMask: CGEventFlags = [.maskCommand, .maskShift, .maskAlternate, .maskControl]
 
     var flags: CGEventFlags { CGEventFlags(rawValue: modifiers) }

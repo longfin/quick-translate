@@ -97,10 +97,15 @@ final class TranslationViewModel: ObservableObject {
         let pb = NSPasteboard.general
         pb.clearContents()
         pb.setString(translatedText, forType: .string)
+        NotificationCenter.default.post(name: .quickTranslateWrotePasteboard, object: nil)
         copied = true
         copiedResetWork?.cancel()
         let work = DispatchWorkItem { [weak self] in self?.copied = false }
         copiedResetWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
     }
+}
+
+extension Notification.Name {
+    static let quickTranslateWrotePasteboard = Notification.Name("dev.swen.QuickTranslate.wrotePasteboard")
 }
