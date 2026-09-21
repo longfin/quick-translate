@@ -46,6 +46,23 @@ struct SettingsView: View {
                 Picker("If already in that language, translate to", selection: $settings.fallbackLanguage) {
                     ForEach(AppSettings.languages, id: \.self) { Text(LocalizedStringKey($0)).tag($0) }
                 }
+                Picker("Interface language", selection: Binding(
+                    get: { settings.uiLanguage },
+                    set: { code in
+                        guard code != settings.uiLanguage else { return }
+                        settings.uiLanguage = code
+                        (NSApp.delegate as? AppDelegate)?.relaunch()   // AppleLanguages is read at launch
+                    })) {
+                    ForEach(AppSettings.uiLanguages, id: \.code) { item in
+                        if item.code == "system" {
+                            Text("System default").tag(item.code)
+                        } else {
+                            Text(verbatim: item.name).tag(item.code)
+                        }
+                    }
+                }
+                Text("Changing the interface language restarts the app.")
+                    .font(.caption).foregroundColor(.secondary)
             }
 
             Section("Hotkey & Window") {

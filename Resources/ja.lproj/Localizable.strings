@@ -42,6 +42,9 @@
 "Languages" = "言語";
 "Default target language" = "デフォルトの翻訳先言語";
 "If already in that language, translate to" = "すでにその言語の場合の翻訳先";
+"Interface language" = "表示言語";
+"System default" = "システム設定に従う";
+"Changing the interface language restarts the app." = "表示言語を変更するとアプリが再起動します。";
 "Hotkey & Window" = "ショートカット / ウインドウ";
 "Double ⌘C interval" = "⌘C 2回押しの間隔";
 "%.2fs" = "%.2f秒";

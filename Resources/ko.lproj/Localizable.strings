@@ -42,6 +42,9 @@
 "Languages" = "언어";
 "Default target language" = "기본 번역 언어";
 "If already in that language, translate to" = "이미 그 언어이면 →";
+"Interface language" = "표시 언어";
+"System default" = "시스템 설정 따름";
+"Changing the interface language restarts the app." = "표시 언어를 바꾸면 앱이 다시 시작됩니다.";
 "Hotkey & Window" = "단축키 / 창";
 "Double ⌘C interval" = "⌘C 두 번 인식 간격";
 "%.2fs" = "%.2f초";

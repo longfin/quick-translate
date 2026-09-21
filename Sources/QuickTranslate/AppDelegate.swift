@@ -91,7 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     /// macOS only delivers global key events to processes that were trusted at launch, so relaunch.
-    private func relaunch() {
+    func relaunch() {
         let path = Bundle.main.bundleURL.path
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/bin/sh")

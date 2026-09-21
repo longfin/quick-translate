@@ -44,6 +44,22 @@ final class AppSettings: ObservableObject {
     @Published var doublePressInterval: Double { didSet { defaults.set(doublePressInterval, forKey: "doublePressInterval") } }
     @Published var closeOnOutsideClick: Bool { didSet { defaults.set(closeOnOutsideClick, forKey: "closeOnOutsideClick") } }
 
+    /// UI language override: "system" or a localization code ("en", "ko", "ja").
+    /// Applied through AppleLanguages, which macOS reads at launch, so changing it relaunches the app.
+    @Published var uiLanguage: String {
+        didSet {
+            defaults.set(uiLanguage, forKey: "uiLanguage")
+            if uiLanguage == "system" {
+                defaults.removeObject(forKey: "AppleLanguages")
+            } else {
+                defaults.set([uiLanguage], forKey: "AppleLanguages")
+            }
+        }
+    }
+    static let uiLanguages: [(code: String, name: String)] = [
+        ("system", "System default"), ("en", "English"), ("ko", "한국어"), ("ja", "日本語"),
+    ]
+
     private init() {
         backend = TranslationBackend(rawValue: defaults.string(forKey: "backend") ?? "") ?? .claude
         claudeModel = defaults.string(forKey: "claudeModel") ?? "haiku"
@@ -55,6 +71,7 @@ final class AppSettings: ObservableObject {
         codexPath = defaults.string(forKey: "codexPath") ?? ""
         doublePressInterval = defaults.object(forKey: "doublePressInterval") as? Double ?? 0.4
         closeOnOutsideClick = defaults.object(forKey: "closeOnOutsideClick") as? Bool ?? true
+        uiLanguage = defaults.string(forKey: "uiLanguage") ?? "system"
     }
 
     /// First-launch defaults: translate into the user's system language; if the text is already in it,

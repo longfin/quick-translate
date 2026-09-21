@@ -53,6 +53,7 @@ Menu bar icon → **Settings…**
 - **Model**: for Claude `haiku` (default, fastest) / `sonnet` / `opus`; for Codex leave blank for the default
 - **CLI path**: set manually if auto-detection fails (e.g. `~/.local/bin/claude`)
 - **Languages**: default target language and the fallback used when the text is already in it
+- **Interface language**: follow the system, or force English / 한국어 / 日本語 (the app restarts to apply)
 - **Double ⌘C interval**, **Close when clicking outside**
 
 ## When the hotkey does not fire
