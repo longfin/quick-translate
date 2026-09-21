@@ -10,6 +10,8 @@
 "Pin window (stays open when clicking outside)" = "ウインドウを固定（外側をクリックしても閉じない）";
 "Close (Esc)" = "閉じる (Esc)";
 "Auto-detect" = "自動検出";
+"Cancel" = "キャンセル";
+"Cancelled" = "キャンセルしました";
 "Translating…" = "翻訳中…";
 "Retranslate" = "再翻訳";
 "Copy" = "コピー";

@@ -10,6 +10,8 @@
 "Pin window (stays open when clicking outside)" = "창 고정 (바깥을 클릭해도 닫히지 않음)";
 "Close (Esc)" = "닫기 (Esc)";
 "Auto-detect" = "자동 감지";
+"Cancel" = "취소";
+"Cancelled" = "취소됨";
 "Translating…" = "번역 중…";
 "Retranslate" = "다시 번역";
 "Copy" = "복사";

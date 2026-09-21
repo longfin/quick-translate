@@ -91,6 +91,8 @@ struct TranslationView: View {
                         Text("Translating…").foregroundColor(.secondary)
                     }
                     .font(.system(size: 13))
+                } else if vm.translatedText.isEmpty && vm.cancelled {
+                    Text("Cancelled").font(.system(size: 13)).foregroundColor(.secondary)
                 } else {
                     Text(verbatim: vm.translatedText)
                         .font(.system(size: 14))
@@ -112,6 +114,12 @@ struct TranslationView: View {
             Spacer()
             if vm.isLoading {
                 ProgressView().controlSize(.small)
+                Button("Cancel") { vm.cancel() }
+                    .keyboardShortcut(".", modifiers: .command)
+                    .controlSize(.small)
+                    .help("⌘.")
+            } else if vm.cancelled {
+                Text("Cancelled").font(.system(size: 11)).foregroundColor(.secondary)
             }
             Button("Retranslate") { vm.retranslate() }
                 .keyboardShortcut(.return, modifiers: .command)

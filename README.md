@@ -46,6 +46,7 @@ the app relaunches itself once so macOS starts delivering key events.
 | Edit the source and retranslate | Edit the text at the top, then **⌘⏎** |
 | Copy the translation | **⇧⌘C** or the Copy button |
 | Close | **Esc**, ⌘W, or click outside (not while a translation is still running) |
+| Cancel a running translation | **⌘.** or the Cancel button (partial text stays) |
 | Keep it open | 📌 pin button |
 
 By default it translates into your system language, and if the text is already in that language it

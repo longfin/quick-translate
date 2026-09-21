@@ -10,6 +10,7 @@ final class TranslationViewModel: ObservableObject {
     @Published var detectedLanguage: String?
     @Published var pinned = false
     @Published var copied = false
+    @Published var cancelled = false
 
     let settings: AppSettings
     private let engine = TranslationEngine()
@@ -44,6 +45,7 @@ final class TranslationViewModel: ObservableObject {
         translatedText = ""
         errorMessage = nil
         copied = false
+        cancelled = false
 
         let text = sourceText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else {
@@ -79,10 +81,15 @@ final class TranslationViewModel: ObservableObject {
         }
     }
 
+    /// Stops the running translation, keeping any partial text already streamed in.
     func cancel() {
+        guard job != nil || isLoading else { return }
         job?.cancel()
         job = nil
+        generation += 1          // drop any events still in flight
         isLoading = false
+        cancelled = true
+        Log.write("translate cancelled")
     }
 
     func copyTranslation() {
