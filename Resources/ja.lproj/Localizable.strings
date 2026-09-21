@@ -26,7 +26,7 @@
 
 /* Secure input */
 "%@ has Secure Keyboard Entry enabled, so the hotkey cannot work." = "%@ がセキュリティキーボード入力を有効にしているため、ショートカットが機能しません。";
-"another app" = "別のアプリ";
+"Another app" = "別のアプリ";
 "Turn off Secure Keyboard Entry in that app, or use the hotkey from another app." = "そのアプリでセキュリティキーボード入力をオフにするか、別のアプリで使用してください。";
 
 /* Settings */

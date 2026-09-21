@@ -26,7 +26,7 @@
 
 /* Secure input */
 "%@ has Secure Keyboard Entry enabled, so the hotkey cannot work." = "%@이(가) 보안 키보드 입력을 켜서 단축키가 동작하지 않습니다.";
-"another app" = "다른 앱";
+"Another app" = "다른 앱";
 "Turn off Secure Keyboard Entry in that app, or use the hotkey from another app." = "해당 앱에서 Secure Keyboard Entry를 끄거나 다른 앱에서 사용하세요.";
 
 /* Settings */

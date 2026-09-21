@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var settingsWindow: NSWindow?
     private var accessibilityTimer: Timer?
     private let secureInputWarningItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+    private var accessibilityMenuItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Log.write("launched v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")")
@@ -55,6 +56,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         let axItem = NSMenuItem(title: L("Accessibility Permission…"), action: #selector(openAccessibility), keyEquivalent: "")
         axItem.target = self
+        axItem.isHidden = AXIsProcessTrusted()   // only useful until the permission is granted
+        accessibilityMenuItem = axItem
         menu.addItem(axItem)
         menu.addItem(.separator())
 
@@ -63,6 +66,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
+        accessibilityMenuItem?.isHidden = AXIsProcessTrusted()
         if let warning = SecureInput.warningText() {
             secureInputWarningItem.title = "⚠️ " + warning
             secureInputWarningItem.isHidden = false
