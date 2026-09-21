@@ -13,73 +13,76 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("번역 엔진") {
-                Picker("엔진", selection: $settings.backend) {
-                    ForEach(TranslationBackend.allCases) { Text($0.displayName).tag($0) }
+            Section("Translation Engine") {
+                Picker("Engine", selection: $settings.backend) {
+                    ForEach(TranslationBackend.allCases) { Text(verbatim: $0.displayName).tag($0) }
                 }
                 switch settings.backend {
                 case .claude:
-                    TextField("모델 (haiku / sonnet / opus)", text: $settings.claudeModel)
-                    TextField("claude 경로 (비우면 자동 탐색)", text: $settings.claudePath)
+                    TextField("Model (haiku / sonnet / opus)", text: $settings.claudeModel)
+                    TextField("claude path (blank = auto-detect)", text: $settings.claudePath)
                 case .codex:
-                    TextField("모델 (비우면 codex 기본값)", text: $settings.codexModel)
-                    TextField("codex 경로 (비우면 자동 탐색)", text: $settings.codexPath)
+                    TextField("Model (blank = codex default)", text: $settings.codexModel)
+                    TextField("codex path (blank = auto-detect)", text: $settings.codexPath)
                 }
                 HStack {
-                    Text(detectedPath.isEmpty ? "CLI를 찾을 수 없습니다" : detectedPath)
-                        .font(.caption)
-                        .foregroundColor(detectedPath.isEmpty ? .red : .secondary)
-                        .textSelection(.enabled)
+                    if detectedPath.isEmpty {
+                        Text("CLI not found").font(.caption).foregroundColor(.red)
+                    } else {
+                        Text(verbatim: detectedPath).font(.caption).foregroundColor(.secondary).textSelection(.enabled)
+                    }
                     Spacer()
-                    Button("테스트") { runTest() }.disabled(testing)
+                    Button("Test") { runTest() }.disabled(testing)
                 }
                 if !testResult.isEmpty {
-                    Text(testResult).font(.caption).textSelection(.enabled)
+                    Text(verbatim: testResult).font(.caption).textSelection(.enabled)
                 }
             }
 
-            Section("언어") {
-                Picker("기본 번역 언어", selection: $settings.targetLanguage) {
-                    ForEach(AppSettings.languages, id: \.self) { Text($0).tag($0) }
+            Section("Languages") {
+                Picker("Default target language", selection: $settings.targetLanguage) {
+                    ForEach(AppSettings.languages, id: \.self) { Text(LocalizedStringKey($0)).tag($0) }
                 }
-                Picker("이미 그 언어이면 →", selection: $settings.fallbackLanguage) {
-                    ForEach(AppSettings.languages, id: \.self) { Text($0).tag($0) }
+                Picker("If already in that language, translate to", selection: $settings.fallbackLanguage) {
+                    ForEach(AppSettings.languages, id: \.self) { Text(LocalizedStringKey($0)).tag($0) }
                 }
             }
 
-            Section("단축키 / 창") {
+            Section("Hotkey & Window") {
                 HStack {
-                    Text("⌘C 두 번 인식 간격")
+                    Text("Double ⌘C interval")
                     Slider(value: $settings.doublePressInterval, in: 0.2...1.0, step: 0.05)
-                    Text(String(format: "%.2f초", settings.doublePressInterval))
+                    Text(verbatim: L("%.2fs", settings.doublePressInterval))
                         .monospacedDigit()
                         .frame(width: 50, alignment: .trailing)
                 }
-                Toggle("창 바깥을 클릭하면 닫기", isOn: $settings.closeOnOutsideClick)
+                Toggle("Close when clicking outside", isOn: $settings.closeOnOutsideClick)
             }
 
-            Section("권한") {
+            Section("Permissions") {
                 HStack {
                     Image(systemName: accessibilityGranted ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .foregroundColor(accessibilityGranted ? .green : .red)
-                    Text(accessibilityGranted
-                         ? "손쉬운 사용(Accessibility) 권한이 허용되었습니다."
-                         : "전역 단축키를 쓰려면 손쉬운 사용 권한이 필요합니다.")
+                    if accessibilityGranted {
+                        Text("Accessibility permission granted.")
+                    } else {
+                        Text("Accessibility permission is required for the global hotkey.")
+                    }
                     Spacer()
                     if !accessibilityGranted {
-                        Button("설정 열기") { openAccessibilitySettings() }
+                        Button("Open System Settings") { openAccessibilitySettings() }
                     }
                 }
                 if let warning = secureInputWarning {
                     HStack(alignment: .top) {
                         Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.orange)
-                        Text(warning + ". 해당 앱에서 Secure Keyboard Entry를 끄거나 다른 앱에서 사용하세요.")
+                        Text(verbatim: warning + " " + L("Turn off Secure Keyboard Entry in that app, or use the hotkey from another app."))
                     }
                 }
             }
         }
         .formStyle(.grouped)
-        .frame(width: 520, height: 480)
+        .frame(width: 540, height: 500)
         .onAppear { refreshDetectedPath() }
         .onChange(of: settings.backend) { _ in refreshDetectedPath() }
         .onChange(of: settings.claudePath) { _ in refreshDetectedPath() }
@@ -97,7 +100,7 @@ struct SettingsView: View {
 
     private func runTest() {
         testing = true
-        testResult = "테스트 중…"
+        testResult = L("Testing…")
         var acc = ""
         engine.translate(text: "The quick brown fox jumps over the lazy dog.",
                          target: settings.targetLanguage,

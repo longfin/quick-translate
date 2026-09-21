@@ -1,0 +1,69 @@
+/* Menu */
+"Translate Clipboard (⌘C ⌘C)" = "클립보드 번역 (⌘C ⌘C)";
+"Settings…" = "설정…";
+"Accessibility Permission…" = "손쉬운 사용 권한…";
+"Quit QuickTranslate" = "QuickTranslate 종료";
+"QuickTranslate Settings" = "QuickTranslate 설정";
+
+/* Panel */
+"Unpin" = "고정 해제";
+"Pin window (stays open when clicking outside)" = "창 고정 (바깥을 클릭해도 닫히지 않음)";
+"Close (Esc)" = "닫기 (Esc)";
+"Translating…" = "번역 중…";
+"Retranslate" = "다시 번역";
+"Copy" = "복사";
+"Copied ✓" = "복사됨 ✓";
+"Nothing to translate. Select text and press ⌘C twice." = "번역할 텍스트가 없습니다. 텍스트를 선택한 뒤 ⌘C를 두 번 누르세요.";
+
+/* Engine errors */
+"`%@` CLI not found. Install it or set its path in Settings." = "`%@` CLI를 찾을 수 없습니다. 설치하거나 설정에서 경로를 지정하세요.";
+"Claude returned an error." = "Claude가 오류를 반환했습니다.";
+"claude exited with code %d" = "claude 종료 코드 %d";
+"codex exited with code %d" = "codex 종료 코드 %d";
+"Failed to launch claude: %@" = "claude 실행 실패: %@";
+"Failed to launch codex: %@" = "codex 실행 실패: %@";
+
+/* Secure input */
+"%@ has Secure Keyboard Entry enabled, so the hotkey cannot work." = "%@이(가) 보안 키보드 입력을 켜서 단축키가 동작하지 않습니다.";
+"another app" = "다른 앱";
+"Turn off Secure Keyboard Entry in that app, or use the hotkey from another app." = "해당 앱에서 Secure Keyboard Entry를 끄거나 다른 앱에서 사용하세요.";
+
+/* Settings */
+"Translation Engine" = "번역 엔진";
+"Engine" = "엔진";
+"Model (haiku / sonnet / opus)" = "모델 (haiku / sonnet / opus)";
+"claude path (blank = auto-detect)" = "claude 경로 (비우면 자동 탐색)";
+"Model (blank = codex default)" = "모델 (비우면 codex 기본값)";
+"codex path (blank = auto-detect)" = "codex 경로 (비우면 자동 탐색)";
+"CLI not found" = "CLI를 찾을 수 없습니다";
+"Test" = "테스트";
+"Testing…" = "테스트 중…";
+"Languages" = "언어";
+"Default target language" = "기본 번역 언어";
+"If already in that language, translate to" = "이미 그 언어이면 →";
+"Hotkey & Window" = "단축키 / 창";
+"Double ⌘C interval" = "⌘C 두 번 인식 간격";
+"%.2fs" = "%.2f초";
+"Close when clicking outside" = "창 바깥을 클릭하면 닫기";
+"Permissions" = "권한";
+"Accessibility permission granted." = "손쉬운 사용(Accessibility) 권한이 허용되었습니다.";
+"Accessibility permission is required for the global hotkey." = "전역 단축키를 쓰려면 손쉬운 사용 권한이 필요합니다.";
+"Open System Settings" = "설정 열기";
+
+/* Language names */
+"Korean" = "한국어";
+"English" = "영어";
+"Japanese" = "일본어";
+"Chinese (Simplified)" = "중국어 (간체)";
+"Chinese (Traditional)" = "중국어 (번체)";
+"Spanish" = "스페인어";
+"French" = "프랑스어";
+"German" = "독일어";
+"Portuguese" = "포르투갈어";
+"Italian" = "이탈리아어";
+"Russian" = "러시아어";
+"Vietnamese" = "베트남어";
+"Thai" = "태국어";
+"Indonesian" = "인도네시아어";
+"Hindi" = "힌디어";
+"Arabic" = "아랍어";

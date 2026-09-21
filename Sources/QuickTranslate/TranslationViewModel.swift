@@ -36,7 +36,7 @@ final class TranslationViewModel: ObservableObject {
 
         let text = sourceText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else {
-            errorMessage = "번역할 텍스트가 없습니다. 텍스트를 선택한 뒤 ⌘C를 두 번 누르세요."
+            errorMessage = L("Nothing to translate. Select text and press ⌘C twice.")
             return
         }
         isLoading = true

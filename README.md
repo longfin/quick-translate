@@ -1,94 +1,111 @@
 # QuickTranslate
 
-DeepL 데스크톱 클라이언트처럼 **⌘C 를 두 번** 누르면 선택한 텍스트의 번역 창이 바로 뜨는 macOS 메뉴바 앱입니다.
-별도 API 키 없이 로컬에 설치된 **Claude Code CLI(Claude 구독)** 또는 **Codex CLI(ChatGPT 구독)** 를 그대로 사용합니다.
+English · [한국어](README.ko.md)
 
-## 요구 사항
+A tiny macOS menu bar app: press **⌘C twice** and a translation of the selected text pops up next to
+your cursor, like the DeepL desktop client. No API keys. It uses the **Claude Code CLI** (your Claude
+subscription) or the **Codex CLI** (your ChatGPT subscription) that you already have installed and logged in.
 
-- macOS 13 이상, Swift 5.9+ 툴체인 (Xcode Command Line Tools면 충분)
-- 아래 중 하나 이상이 설치·로그인되어 있어야 합니다.
-  - `claude` — [Claude Code](https://docs.claude.com/en/docs/claude-code) (`claude` 를 한 번 실행해 로그인)
+## Requirements
+
+- macOS 13+, Swift 5.9+ toolchain (Xcode Command Line Tools are enough)
+- At least one of these installed and logged in:
+  - `claude` — [Claude Code](https://docs.claude.com/en/docs/claude-code) (run `claude` once to log in)
   - `codex` — [Codex CLI](https://github.com/openai/codex) (`codex login`)
 
-## 빌드 / 설치
+## Build & install
 
 ```bash
-./build.sh            # build/QuickTranslate.app 생성
-./build.sh --install  # /Applications 에 복사 후 실행
+./make-cert.sh        # optional, once: self-signed identity so rebuilds keep the Accessibility permission
+./build.sh            # builds build/QuickTranslate.app
+./build.sh --install  # copies to /Applications and launches it
 ```
 
-첫 실행 시 **손쉬운 사용(Accessibility)** 권한을 요청합니다. 전역 키 입력(⌘C ⌘C)을 감지하려면 반드시 허용해야 합니다.
-시스템 설정 → 개인정보 보호 및 보안 → 손쉬운 사용 → QuickTranslate 켜기.
+On first launch the app asks for the **Accessibility** permission (System Settings → Privacy & Security →
+Accessibility). It is required to detect the global ⌘C ⌘C hotkey. If you grant it after the app has started,
+the app relaunches itself once so macOS starts delivering key events.
 
-> ad-hoc 서명(기본값)은 빌드할 때마다 서명이 바뀌어 기존 손쉬운 사용 권한이 조용히 무효화됩니다
-> (목록에는 켜져 있는데 동작하지 않는 상태). `./build.sh --install` 은 설치 시 `tccutil reset` 으로
-> 이 항목을 지워 다시 허용 창이 뜨게 합니다. 수동으로는 `tccutil reset Accessibility dev.swen.QuickTranslate`.
-> 권한을 유지하려면 고정된 서명 ID가 필요합니다. `./make-cert.sh` 로 자체 서명 인증서("QuickTranslate Dev")를
-> 로그인 키체인에 만들어 두면 `build.sh` 가 자동으로 그걸로 서명하며, 이후 재빌드해도 권한이 유지됩니다.
-> Apple 개발자 인증서가 있으면 `CODESIGN_IDENTITY="Apple Development: ..." ./build.sh` 도 됩니다.
->
-> 권한을 허용하면 앱을 재시작하지 않아도 2초 안에 자동으로 단축키 감지가 시작됩니다.
+> With plain ad-hoc signing every rebuild changes the signature and silently invalidates the permission
+> (the switch looks on but nothing works). `./build.sh --install` clears the stale entry so you get asked
+> again. Run `./make-cert.sh` once to create a local "QuickTranslate Dev" certificate; `build.sh` then signs
+> with it automatically and the permission survives rebuilds. An Apple developer identity also works:
+> `CODESIGN_IDENTITY="Apple Development: ..." ./build.sh`.
 
-## 사용법
+## Usage
 
-| 동작 | 방법 |
+| Action | How |
 |---|---|
-| 번역 창 열기 | 텍스트 선택 후 **⌘C ⌘C** (0.4초 안에 두 번) |
-| 번역 언어 바꾸기 | 창 상단 언어 선택 (바꾸면 즉시 재번역) |
-| 원문 수정 후 재번역 | 상단 원문 영역 편집 → **⌘⏎** |
-| 번역 결과 복사 | **⇧⌘C** 또는 복사 버튼 |
-| 창 닫기 | **Esc**, ⌘W, 또는 창 바깥 클릭 (번역 중에는 바깥 클릭으로 닫히지 않음) |
-| 창 고정 | 📌 버튼 (바깥을 클릭해도 닫히지 않음) |
+| Open the translation popup | Select text, press **⌘C ⌘C** (twice within 0.4s, or hold ⌘ and tap C twice) |
+| Change target language | Picker at the top of the popup (retranslates immediately) |
+| Edit the source and retranslate | Edit the text at the top, then **⌘⏎** |
+| Copy the translation | **⇧⌘C** or the Copy button |
+| Close | **Esc**, ⌘W, or click outside (not while a translation is still running) |
+| Keep it open | 📌 pin button |
 
-기본 동작: 텍스트를 **한국어**로 번역하고, 이미 한국어인 텍스트는 **영어**로 번역합니다. 메뉴바 아이콘 → 설정에서 바꿀 수 있습니다.
+By default it translates into your system language, and if the text is already in that language it
+translates into your next preferred language (or English). Change this in Settings.
 
-## 설정
+## Settings
 
-메뉴바 아이콘 → **설정…**
+Menu bar icon → **Settings…**
 
-- **엔진**: Claude (Claude Code CLI) / ChatGPT (Codex CLI)
-- **모델**: Claude는 `haiku`(기본, 가장 빠름) / `sonnet` / `opus`, Codex는 비우면 기본 모델
-- **CLI 경로**: 자동 탐색이 실패하면 직접 지정 (`~/.local/bin/claude` 등)
-- **언어**: 기본 번역 언어와, 원문이 이미 그 언어일 때 사용할 언어
-- **⌘C 두 번 인식 간격**, **바깥 클릭 시 닫기**
+- **Engine**: Claude (Claude Code CLI) or ChatGPT (Codex CLI)
+- **Model**: for Claude `haiku` (default, fastest) / `sonnet` / `opus`; for Codex leave blank for the default
+- **CLI path**: set manually if auto-detection fails (e.g. `~/.local/bin/claude`)
+- **Languages**: default target language and the fallback used when the text is already in it
+- **Double ⌘C interval**, **Close when clicking outside**
 
-## 단축키가 안 잡힐 때
+## When the hotkey does not fire
 
-- **보안 키보드 입력(Secure Keyboard Entry)**: iTerm2, Ghostty, cmux 같은 터미널이나 암호 입력창이 이 기능을 켜면
-  macOS가 모든 앱의 전역 키 감시를 막습니다. 그 앱이 앞에 있는 동안은 ⌘C ⌘C가 동작하지 않습니다.
-  메뉴바 메뉴와 설정 창에 어느 앱이 켰는지 경고가 표시되니, 해당 앱 설정에서 끄거나 다른 앱에서 사용하세요.
-- **권한을 앱 실행 후에 허용한 경우**: macOS는 실행 시점의 권한으로 키 이벤트 전달 여부를 정하므로 앱이 자동으로 한 번 재시작합니다.
+- **Secure Keyboard Entry**: terminals (iTerm2, Ghostty, cmux, …) and password fields turn this on, and macOS
+  then blocks global key monitoring for every app. The menu bar menu and the Settings window show which
+  app has it enabled. Turn it off in that app or use the hotkey from another app. If an app quits without
+  releasing it, the state can get stuck; locking and unlocking the screen resets it.
+- **Permission granted after launch**: macOS decides at launch whether a process receives key events, so the
+  app relaunches itself automatically once the permission appears.
 
-## 외부에서 번역창 열기
+## Triggering from other tools
 
-Raycast, Hammerspoon, 다른 단축키 앱에서 아래 알림을 보내면 클립보드 번역창이 열립니다.
+Raycast, Hammerspoon or any script can open the popup for the current clipboard:
 
 ```bash
 osascript -l JavaScript -e 'ObjC.import("Foundation"); $.NSDistributedNotificationCenter.defaultCenter.postNotificationNameObject("dev.swen.QuickTranslate.translate", $())'
 ```
 
-문제가 생기면 `~/Library/Logs/QuickTranslate.log` 를 확인하세요.
+Logs go to `~/Library/Logs/QuickTranslate.log`.
 
-## 동작 방식
+## Localization
 
-- `NSEvent` 전역 키 모니터로 ⌘C 두 번을 감지하고, 클립보드 문자열을 읽어 플로팅 패널(`NSPanel`)을 마우스 근처에 띄웁니다.
-- Claude: `claude -p --output-format stream-json --include-partial-messages --tools "" --strict-mcp-config --setting-sources ""`
-  로 실행해 토큰 단위 스트리밍으로 결과를 표시합니다. 사용자 설정·훅·MCP 서버를 로드하지 않아 빠르게 뜹니다.
-- Codex: `codex exec -s read-only -o <file>` 로 실행하고 마지막 메시지를 읽습니다 (스트리밍 없음).
+The UI is English by default and switches to Korean or Japanese automatically based on the system
+language. On first launch the default translation languages follow the system language too. To add a
+language, create `Resources/<lang>.lproj/Localizable.strings` (keys are the English strings).
 
-## 프로젝트 구조
+## How it works
+
+- A CGEvent tap watches for two ⌘C key-downs in quick succession, reads the clipboard string and shows a
+  non-activating floating `NSPanel` near the mouse. The panel never steals focus from the app you are in.
+- Claude: runs `claude -p --output-format stream-json --include-partial-messages --tools "" --strict-mcp-config --setting-sources ""`
+  and streams tokens into the panel. The flags skip your user settings, hooks and MCP servers so it starts fast
+  and sends only a few hundred input tokens.
+- Codex: runs `codex exec -s read-only -o <file>` and reads the final message (no streaming).
+
+## Project layout
 
 ```
 Sources/QuickTranslate/
-  main.swift                 앱 진입점 (메뉴바 전용, Dock 아이콘 없음)
-  AppDelegate.swift          상태 표시줄 메뉴, 권한 처리, 클립보드 번역 트리거
-  DoubleCopyMonitor.swift    ⌘C ⌘C 감지
-  TranslationPanel.swift     플로팅 패널 (위치, 바깥 클릭 닫기, Esc)
-  TranslationView.swift      패널 UI (SwiftUI)
-  TranslationViewModel.swift 번역 상태 / 스트리밍 반영
-  TranslationEngine.swift    claude / codex CLI 호출 및 출력 파싱
-  ProcessJob.swift           자식 프로세스 실행 + stdout 라인 스트리밍
-  CLILocator.swift           CLI 바이너리 탐색 (Finder에서 실행 시 PATH 보정)
-  Settings.swift             UserDefaults 기반 설정
-  SettingsView.swift         설정 창
+  main.swift                 entry point (menu bar only, no Dock icon)
+  AppDelegate.swift          status item menu, permission flow, clipboard trigger, auto-relaunch
+  DoubleCopyMonitor.swift    ⌘C ⌘C detection (CGEvent tap)
+  SecureInput.swift          Secure Keyboard Entry detection
+  TranslationPanel.swift     floating panel (placement, outside-click close, Esc)
+  TranslationView.swift      panel UI (SwiftUI)
+  TranslationViewModel.swift translation state / streaming
+  TranslationEngine.swift    claude / codex invocation and output parsing
+  ProcessJob.swift           child process runner with line-streamed stdout
+  CLILocator.swift           finds the CLI binaries (Finder-launched apps have a minimal PATH)
+  Settings.swift             UserDefaults-backed settings
+  SettingsView.swift         settings window
+  L10n.swift                 localization helper
+Resources/
+  Info.plist, en/ko/ja.lproj/Localizable.strings
 ```

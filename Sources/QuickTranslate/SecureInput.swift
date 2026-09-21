@@ -25,7 +25,7 @@ enum SecureInput {
 
     static func warningText() -> String? {
         guard isEnabled else { return nil }
-        let holder = holderName() ?? "다른 앱"
-        return "\(holder)이(가) 보안 키보드 입력을 켜서 단축키가 동작하지 않습니다"
+        let holder = holderName() ?? L("another app")
+        return L("%@ has Secure Keyboard Entry enabled, so the hotkey cannot work.", holder)
     }
 }

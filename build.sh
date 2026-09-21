@@ -17,6 +17,7 @@ rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/${APP_NAME}"
 cp Resources/Info.plist "$APP_DIR/Contents/Info.plist"
+cp -R Resources/*.lproj "$APP_DIR/Contents/Resources/"
 echo "APPL????" > "$APP_DIR/Contents/PkgInfo"
 
 # Prefer an explicit identity; else a local self-signed "QuickTranslate Dev" cert if present; else ad-hoc.
@@ -34,7 +35,7 @@ codesign --force --deep --sign "$IDENTITY" "$APP_DIR"
 echo "✓ built $APP_DIR"
 
 if [ "${1:-}" = "--install" ]; then
-    pkill -x "$APP_NAME" 2>/dev/null || true
+    pkill -x "$APP_NAME" 2>/dev/null && sleep 1 || true
     rm -rf "/Applications/${APP_NAME}.app"
     cp -R "$APP_DIR" /Applications/
     echo "✓ installed to /Applications/${APP_NAME}.app"

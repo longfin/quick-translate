@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Log.write("launched v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")")
+        Log.write("ui localization: \(Bundle.main.preferredLocalizations) e.g. \(L("Settings…"))")
         setupStatusItem()
 
         hotkey = DoubleCopyMonitor(interval: { [settings] in settings.doublePressInterval }) { [weak self] in
@@ -43,21 +44,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.delegate = self
         secureInputWarningItem.isHidden = true
         menu.addItem(secureInputWarningItem)
-        let translateItem = NSMenuItem(title: "클립보드 번역  (⌘C ⌘C)", action: #selector(translateClipboardAction), keyEquivalent: "")
+        let translateItem = NSMenuItem(title: L("Translate Clipboard (⌘C ⌘C)"), action: #selector(translateClipboardAction), keyEquivalent: "")
         translateItem.target = self
         menu.addItem(translateItem)
         menu.addItem(.separator())
 
-        let settingsItem = NSMenuItem(title: "설정…", action: #selector(openSettings), keyEquivalent: ",")
+        let settingsItem = NSMenuItem(title: L("Settings…"), action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
 
-        let axItem = NSMenuItem(title: "손쉬운 사용 권한 설정…", action: #selector(openAccessibility), keyEquivalent: "")
+        let axItem = NSMenuItem(title: L("Accessibility Permission…"), action: #selector(openAccessibility), keyEquivalent: "")
         axItem.target = self
         menu.addItem(axItem)
         menu.addItem(.separator())
 
-        menu.addItem(NSMenuItem(title: "QuickTranslate 종료", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: L("Quit QuickTranslate"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
     }
 
@@ -119,7 +120,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if settingsWindow == nil {
             let host = NSHostingController(rootView: SettingsView(settings: settings))
             let window = NSWindow(contentViewController: host)
-            window.title = "QuickTranslate 설정"
+            window.title = L("QuickTranslate Settings")
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
             window.center()

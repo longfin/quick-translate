@@ -1,0 +1,69 @@
+/* Menu */
+"Translate Clipboard (⌘C ⌘C)" = "クリップボードを翻訳 (⌘C ⌘C)";
+"Settings…" = "設定…";
+"Accessibility Permission…" = "アクセシビリティ権限…";
+"Quit QuickTranslate" = "QuickTranslate を終了";
+"QuickTranslate Settings" = "QuickTranslate 設定";
+
+/* Panel */
+"Unpin" = "固定を解除";
+"Pin window (stays open when clicking outside)" = "ウインドウを固定（外側をクリックしても閉じない）";
+"Close (Esc)" = "閉じる (Esc)";
+"Translating…" = "翻訳中…";
+"Retranslate" = "再翻訳";
+"Copy" = "コピー";
+"Copied ✓" = "コピー済み ✓";
+"Nothing to translate. Select text and press ⌘C twice." = "翻訳するテキストがありません。テキストを選択して ⌘C を2回押してください。";
+
+/* Engine errors */
+"`%@` CLI not found. Install it or set its path in Settings." = "`%@` CLI が見つかりません。インストールするか、設定でパスを指定してください。";
+"Claude returned an error." = "Claude がエラーを返しました。";
+"claude exited with code %d" = "claude が終了コード %d で終了しました";
+"codex exited with code %d" = "codex が終了コード %d で終了しました";
+"Failed to launch claude: %@" = "claude の起動に失敗しました: %@";
+"Failed to launch codex: %@" = "codex の起動に失敗しました: %@";
+
+/* Secure input */
+"%@ has Secure Keyboard Entry enabled, so the hotkey cannot work." = "%@ がセキュリティキーボード入力を有効にしているため、ショートカットが機能しません。";
+"another app" = "別のアプリ";
+"Turn off Secure Keyboard Entry in that app, or use the hotkey from another app." = "そのアプリでセキュリティキーボード入力をオフにするか、別のアプリで使用してください。";
+
+/* Settings */
+"Translation Engine" = "翻訳エンジン";
+"Engine" = "エンジン";
+"Model (haiku / sonnet / opus)" = "モデル (haiku / sonnet / opus)";
+"claude path (blank = auto-detect)" = "claude のパス（空欄で自動検出）";
+"Model (blank = codex default)" = "モデル（空欄で codex のデフォルト）";
+"codex path (blank = auto-detect)" = "codex のパス（空欄で自動検出）";
+"CLI not found" = "CLI が見つかりません";
+"Test" = "テスト";
+"Testing…" = "テスト中…";
+"Languages" = "言語";
+"Default target language" = "デフォルトの翻訳先言語";
+"If already in that language, translate to" = "すでにその言語の場合の翻訳先";
+"Hotkey & Window" = "ショートカット / ウインドウ";
+"Double ⌘C interval" = "⌘C 2回押しの間隔";
+"%.2fs" = "%.2f秒";
+"Close when clicking outside" = "外側をクリックしたら閉じる";
+"Permissions" = "権限";
+"Accessibility permission granted." = "アクセシビリティ権限が許可されています。";
+"Accessibility permission is required for the global hotkey." = "グローバルショートカットにはアクセシビリティ権限が必要です。";
+"Open System Settings" = "システム設定を開く";
+
+/* Language names */
+"Korean" = "韓国語";
+"English" = "英語";
+"Japanese" = "日本語";
+"Chinese (Simplified)" = "中国語（簡体字）";
+"Chinese (Traditional)" = "中国語（繁体字）";
+"Spanish" = "スペイン語";
+"French" = "フランス語";
+"German" = "ドイツ語";
+"Portuguese" = "ポルトガル語";
+"Italian" = "イタリア語";
+"Russian" = "ロシア語";
+"Vietnamese" = "ベトナム語";
+"Thai" = "タイ語";
+"Indonesian" = "インドネシア語";
+"Hindi" = "ヒンディー語";
+"Arabic" = "アラビア語";

@@ -22,12 +22,12 @@ struct TranslationView: View {
         HStack(spacing: 8) {
             Image(systemName: "character.bubble")
                 .foregroundColor(.accentColor)
-            Text("QuickTranslate")
+            Text(verbatim: "QuickTranslate")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(.secondary)
             Spacer()
             Picker("", selection: $vm.targetLanguage) {
-                ForEach(AppSettings.languages, id: \.self) { Text($0).tag($0) }
+                ForEach(AppSettings.languages, id: \.self) { Text(LocalizedStringKey($0)).tag($0) }
             }
             .labelsHidden()
             .controlSize(.small)
@@ -40,7 +40,7 @@ struct TranslationView: View {
                 Image(systemName: vm.pinned ? "pin.fill" : "pin")
             }
             .buttonStyle(.borderless)
-            .help(vm.pinned ? "고정 해제" : "창 고정 (바깥 클릭 시 닫히지 않음)")
+            .help(vm.pinned ? "Unpin" : "Pin window (stays open when clicking outside)")
 
             Button(action: onClose) {
                 Image(systemName: "xmark.circle.fill")
@@ -48,7 +48,7 @@ struct TranslationView: View {
             }
             .buttonStyle(.borderless)
             .keyboardShortcut("w", modifiers: .command)
-            .help("닫기 (Esc)")
+            .help("Close (Esc)")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -69,7 +69,7 @@ struct TranslationView: View {
             VStack(alignment: .leading, spacing: 8) {
                 if let error = vm.errorMessage {
                     Label {
-                        Text(error).textSelection(.enabled)
+                        Text(verbatim: error).textSelection(.enabled)
                     } icon: {
                         Image(systemName: "exclamationmark.triangle.fill")
                     }
@@ -78,11 +78,11 @@ struct TranslationView: View {
                 } else if vm.translatedText.isEmpty && vm.isLoading {
                     HStack(spacing: 8) {
                         ProgressView().controlSize(.small)
-                        Text("번역 중…").foregroundColor(.secondary)
+                        Text("Translating…").foregroundColor(.secondary)
                     }
                     .font(.system(size: 13))
                 } else {
-                    Text(vm.translatedText)
+                    Text(verbatim: vm.translatedText)
                         .font(.system(size: 14))
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -95,7 +95,7 @@ struct TranslationView: View {
 
     private var footer: some View {
         HStack(spacing: 8) {
-            Text(engineLabel)
+            Text(verbatim: engineLabel)
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
                 .lineLimit(1)
@@ -103,11 +103,11 @@ struct TranslationView: View {
             if vm.isLoading {
                 ProgressView().controlSize(.small)
             }
-            Button("다시 번역") { vm.retranslate() }
+            Button("Retranslate") { vm.retranslate() }
                 .keyboardShortcut(.return, modifiers: .command)
                 .controlSize(.small)
                 .help("⌘⏎")
-            Button(vm.copied ? "복사됨 ✓" : "복사") { vm.copyTranslation() }
+            Button(vm.copied ? "Copied ✓" : "Copy") { vm.copyTranslation() }
                 .keyboardShortcut("c", modifiers: [.command, .shift])
                 .controlSize(.small)
                 .disabled(vm.translatedText.isEmpty)

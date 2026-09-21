@@ -48,12 +48,34 @@ final class AppSettings: ObservableObject {
         backend = TranslationBackend(rawValue: defaults.string(forKey: "backend") ?? "") ?? .claude
         claudeModel = defaults.string(forKey: "claudeModel") ?? "haiku"
         codexModel = defaults.string(forKey: "codexModel") ?? ""
-        targetLanguage = defaults.string(forKey: "targetLanguage") ?? "Korean"
-        fallbackLanguage = defaults.string(forKey: "fallbackLanguage") ?? "English"
+        let systemDefaults = Self.systemDefaultLanguages()
+        targetLanguage = defaults.string(forKey: "targetLanguage") ?? systemDefaults.target
+        fallbackLanguage = defaults.string(forKey: "fallbackLanguage") ?? systemDefaults.fallback
         claudePath = defaults.string(forKey: "claudePath") ?? ""
         codexPath = defaults.string(forKey: "codexPath") ?? ""
         doublePressInterval = defaults.object(forKey: "doublePressInterval") as? Double ?? 0.4
         closeOnOutsideClick = defaults.object(forKey: "closeOnOutsideClick") as? Bool ?? true
+    }
+
+    /// First-launch defaults: translate into the user's system language; if the text is already in it,
+    /// translate into their next preferred language (or English).
+    static func systemDefaultLanguages() -> (target: String, fallback: String) {
+        let byCode: [String: String] = [
+            "ko": "Korean", "en": "English", "ja": "Japanese", "zh-Hans": "Chinese (Simplified)",
+            "zh-Hant": "Chinese (Traditional)", "es": "Spanish", "fr": "French", "de": "German",
+            "pt": "Portuguese", "it": "Italian", "ru": "Russian", "vi": "Vietnamese", "th": "Thai",
+            "id": "Indonesian", "hi": "Hindi", "ar": "Arabic",
+        ]
+        var found: [String] = []
+        for id in Locale.preferredLanguages {
+            let lang = Locale(identifier: id).language
+            let code = lang.languageCode?.identifier ?? ""
+            let key = code == "zh" ? (lang.script?.identifier == "Hant" ? "zh-Hant" : "zh-Hans") : code
+            if let name = byCode[key], !found.contains(name) { found.append(name) }
+        }
+        let target = found.first ?? "English"
+        let fallback = found.dropFirst().first ?? (target == "English" ? "Korean" : "English")
+        return (target, fallback)
     }
 
     var currentModel: String {

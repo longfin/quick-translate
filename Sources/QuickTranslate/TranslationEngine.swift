@@ -31,7 +31,7 @@ final class TranslationEngine {
         let backend = settings.backend
 
         guard let exe = CLILocator.find(backend.executableName, override: settings.currentPathOverride) else {
-            emit(.failed("`\(backend.executableName)` CLI를 찾을 수 없습니다. 설치되어 있는지 확인하거나 설정에서 경로를 직접 지정하세요."))
+            emit(.failed(L("`%@` CLI not found. Install it or set its path in Settings.", backend.executableName)))
             return nil
         }
 
@@ -88,7 +88,7 @@ final class TranslationEngine {
                     let result = (obj["result"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                     if isError {
                         let errors = (obj["errors"] as? [String])?.joined(separator: "\n") ?? ""
-                        emit(.failed(result.isEmpty ? (errors.isEmpty ? "Claude가 오류를 반환했습니다." : errors) : result))
+                        emit(.failed(result.isEmpty ? (errors.isEmpty ? L("Claude returned an error.") : errors) : result))
                     } else {
                         emit(.finished(result))
                     }
@@ -99,11 +99,11 @@ final class TranslationEngine {
             onExit: { status, stderr in
                 if !state.gotResult {
                     let tail = Self.tail(stderr)
-                    emit(.failed(tail.isEmpty ? "claude 종료 코드 \(status)" : tail))
+                    emit(.failed(tail.isEmpty ? L("claude exited with code %d", status) : tail))
                 }
             })
         do { try job.start() } catch {
-            emit(.failed("claude 실행 실패: \(error.localizedDescription)"))
+            emit(.failed(L("Failed to launch claude: %@", error.localizedDescription)))
             return nil
         }
         return job
@@ -143,11 +143,11 @@ final class TranslationEngine {
                     emit(.finished(result))
                 } else {
                     let tail = Self.tail(stderr)
-                    emit(.failed(tail.isEmpty ? "codex 종료 코드 \(status)" : tail))
+                    emit(.failed(tail.isEmpty ? L("codex exited with code %d", status) : tail))
                 }
             })
         do { try job.start() } catch {
-            emit(.failed("codex 실행 실패: \(error.localizedDescription)"))
+            emit(.failed(L("Failed to launch codex: %@", error.localizedDescription)))
             return nil
         }
         return job
