@@ -43,7 +43,7 @@ the app relaunches itself once so macOS starts delivering key events.
 
 | Action | How |
 |---|---|
-| Open the translation popup | Select text, press **⌘C ⌘C** (twice within 0.4s, or hold ⌘ and tap C twice) |
+| Open the translation popup | Select text, press **⌘C ⌘C** (twice within 0.4s, or hold ⌘ and tap C twice). Configurable, see Settings |
 | Change target language | Picker at the top of the popup (retranslates immediately) |
 | Edit the source and retranslate | Edit the text at the top, then **⌘⏎** |
 | Copy the translation | **⇧⌘C** or the Copy button |
@@ -65,7 +65,11 @@ Menu bar icon → **Settings…**
 - **CLI path**: set manually if auto-detection fails (e.g. `~/.local/bin/claude`)
 - **Languages**: default target language and the fallback used when the text is already in it
 - **Interface language**: follow the system, or force English / 한국어 / 日本語 (the app restarts to apply)
-- **Double ⌘C interval**, **Close when clicking outside**
+- **Shortcut**: click "Change…" and press any combination (needs ⌘, ⌥ or ⌃, or a function key). Two trigger
+  modes: **Press twice** (the default ⌘C ⌘C style, where the shortcut is also the app's copy command) or
+  **Press once** (a dedicated shortcut such as ⌃⌥T; the app sends ⌘C for you to copy the selection, and the
+  keystroke is not passed on to the app underneath)
+- **Double-press interval**, **Close when clicking outside**
 
 ## When the hotkey does not fire
 
@@ -111,7 +115,8 @@ language, create `Resources/<lang>.lproj/Localizable.strings` (keys are the Engl
 Sources/QuickTranslate/
   main.swift                 entry point (menu bar only, no Dock icon)
   AppDelegate.swift          status item menu, permission flow, clipboard trigger, auto-relaunch
-  DoubleCopyMonitor.swift    ⌘C ⌘C detection (CGEvent tap)
+  Hotkey.swift               shortcut model, key labels, synthetic ⌘C
+  HotkeyMonitor.swift        shortcut detection (CGEvent tap)
   SecureInput.swift          Secure Keyboard Entry detection
   TranslationPanel.swift     floating panel (placement, outside-click close, Esc)
   TranslationView.swift      panel UI (SwiftUI)

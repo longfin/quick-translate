@@ -1,18 +1,19 @@
 import AppKit
 import CoreGraphics
 
-/// Detects ⌘C pressed twice in quick succession (⌘C ⌘C, or ⌘ held + C C) using a CGEvent tap.
+/// Watches for the configured shortcut using a CGEvent tap.
 /// Requires the Accessibility permission (System Settings → Privacy & Security → Accessibility).
-final class DoubleCopyMonitor {
+final class HotkeyMonitor {
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var lastPress: TimeInterval = 0
+    private let config: () -> HotkeyConfig
     private let interval: () -> TimeInterval
-    private let onTrigger: () -> Void
+    private let onTrigger: (HotkeyConfig) -> Void
 
-    private static let keyCodeC: Int64 = 8 // kVK_ANSI_C (physical key, layout independent)
-
-    init(interval: @escaping () -> TimeInterval, onTrigger: @escaping () -> Void) {
+    init(config: @escaping () -> HotkeyConfig, interval: @escaping () -> TimeInterval,
+         onTrigger: @escaping (HotkeyConfig) -> Void) {
+        self.config = config
         self.interval = interval
         self.onTrigger = onTrigger
     }
@@ -31,13 +32,12 @@ final class DoubleCopyMonitor {
         guard let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
             place: .headInsertEventTap,
-            options: .defaultTap,   // active tap: needs Accessibility; we pass every event through untouched
+            options: .defaultTap,   // active tap: needs Accessibility; lets us swallow single-press shortcuts
             eventsOfInterest: mask,
             callback: { _, type, event, refcon in
                 guard let refcon else { return Unmanaged.passUnretained(event) }
-                let monitor = Unmanaged<DoubleCopyMonitor>.fromOpaque(refcon).takeUnretainedValue()
-                monitor.handle(type: type, event: event)
-                return Unmanaged.passUnretained(event)
+                let monitor = Unmanaged<HotkeyMonitor>.fromOpaque(refcon).takeUnretainedValue()
+                return monitor.handle(type: type, event: event) ? nil : Unmanaged.passUnretained(event)
             },
             userInfo: refcon
         ) else {
@@ -49,7 +49,7 @@ final class DoubleCopyMonitor {
         runLoopSource = source
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
-        Log.write("event tap installed (listenEventAccess=\(CGPreflightListenEventAccess()), secureInput=\(SecureInput.isEnabled))")
+        Log.write("event tap installed (listenEventAccess=\(CGPreflightListenEventAccess()), secureInput=\(SecureInput.isEnabled), hotkey=\(config().display))")
         return true
     }
 
@@ -62,29 +62,39 @@ final class DoubleCopyMonitor {
         tap = nil
     }
 
-    private func handle(type: CGEventType, event: CGEvent) {
+    /// Returns true when the event should be swallowed.
+    private func handle(type: CGEventType, event: CGEvent) -> Bool {
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
             // macOS disables taps that respond too slowly; just turn it back on.
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
             Log.write("event tap re-enabled after \(type == .tapDisabledByTimeout ? "timeout" : "user input")")
-            return
+            return false
         }
-        guard type == .keyDown else { return }
-        let keycode = event.getIntegerValueField(.keyboardEventKeycode)
-        let flags = event.flags
-        guard keycode == Self.keyCodeC,
-              event.getIntegerValueField(.keyboardEventAutorepeat) == 0,
-              flags.contains(.maskCommand),
-              flags.intersection([.maskShift, .maskControl, .maskAlternate]).isEmpty
-        else { return }
+        guard type == .keyDown,
+              event.getIntegerValueField(.eventSourceUserData) != Hotkey.syntheticMarker,
+              event.getIntegerValueField(.keyboardEventAutorepeat) == 0
+        else { return false }
+
+        let cfg = config()
+        guard event.getIntegerValueField(.keyboardEventKeycode) == Int64(cfg.keyCode),
+              event.flags.intersection(HotkeyConfig.modifierMask) == cfg.flags
+        else { return false }
+
+        if !cfg.doublePress {
+            Log.write("hotkey \(cfg.display) pressed")
+            DispatchQueue.main.async { self.onTrigger(cfg) }
+            return true   // a dedicated shortcut: don't let the app underneath see it
+        }
+
         let now = Date().timeIntervalSinceReferenceDate
         let delta = now - lastPress
         if delta <= interval() {
             lastPress = 0
-            Log.write("⌘C ⌘C detected (Δ \(String(format: "%.2f", delta))s)")
-            DispatchQueue.main.async { self.onTrigger() }
+            Log.write("hotkey \(cfg.display) detected (Δ \(String(format: "%.2f", delta))s)")
+            DispatchQueue.main.async { self.onTrigger(cfg) }
         } else {
             lastPress = now
         }
+        return false      // ⌘C must still reach the app so the copy happens
     }
 }

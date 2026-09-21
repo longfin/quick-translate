@@ -67,12 +67,25 @@ struct SettingsView: View {
             }
 
             Section("Hotkey & Window") {
-                HStack {
-                    Text("Double ⌘C interval")
-                    Slider(value: $settings.doublePressInterval, in: 0.2...1.0, step: 0.05)
-                    Text(verbatim: L("%.2fs", settings.doublePressInterval))
-                        .monospacedDigit()
-                        .frame(width: 50, alignment: .trailing)
+                HotkeyRecorderRow(settings: settings)
+                Picker("Trigger", selection: Binding(
+                    get: { settings.hotkey.doublePress },
+                    set: { settings.hotkey.doublePress = $0 })) {
+                    Text("Press twice").tag(true)
+                    Text("Press once").tag(false)
+                }
+                .pickerStyle(.segmented)
+                if settings.hotkey.doublePress {
+                    HStack {
+                        Text("Double-press interval")
+                        Slider(value: $settings.doublePressInterval, in: 0.2...1.0, step: 0.05)
+                        Text(verbatim: L("%.2fs", settings.doublePressInterval))
+                            .monospacedDigit()
+                            .frame(width: 50, alignment: .trailing)
+                    }
+                } else {
+                    Text("When pressed once, the selected text is copied automatically first.")
+                        .font(.caption).foregroundColor(.secondary)
                 }
                 Toggle("Close when clicking outside", isOn: $settings.closeOnOutsideClick)
             }
@@ -138,5 +151,49 @@ struct SettingsView: View {
 func openAccessibilitySettings() {
     if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
         NSWorkspace.shared.open(url)
+    }
+}
+
+/// Shows the current shortcut; "Change…" captures the next key combination pressed.
+struct HotkeyRecorderRow: View {
+    @ObservedObject var settings: AppSettings
+    @State private var recording = false
+    @State private var monitor: Any?
+
+    var body: some View {
+        HStack {
+            Text("Shortcut")
+            Spacer()
+            Text(verbatim: recording ? L("Press the new shortcut…") : settings.hotkey.display)
+                .font(.system(.body, design: .rounded).monospacedDigit())
+                .padding(.horizontal, 10).padding(.vertical, 4)
+                .background(RoundedRectangle(cornerRadius: 6).fill(Color(nsColor: .controlBackgroundColor)))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(recording ? Color.accentColor : Color.secondary.opacity(0.4)))
+            Button(recording ? "Cancel" : "Change…") { recording ? stopRecording() : startRecording() }
+            Button("Reset to ⌘C ⌘C") {
+                stopRecording()
+                settings.hotkey = .default
+            }
+            .disabled(settings.hotkey == .default)
+        }
+        .onDisappear { stopRecording() }
+    }
+
+    private func startRecording() {
+        recording = true
+        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if event.keyCode == 53 { stopRecording(); return nil }           // Esc cancels
+            guard var cfg = Hotkey.config(from: event), cfg.isUsable else { return nil }
+            cfg.doublePress = settings.hotkey.doublePress
+            settings.hotkey = cfg
+            stopRecording()
+            return nil
+        }
+    }
+
+    private func stopRecording() {
+        if let m = monitor { NSEvent.removeMonitor(m) }
+        monitor = nil
+        recording = false
     }
 }

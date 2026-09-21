@@ -42,7 +42,7 @@ DeepL 데스크톱 클라이언트처럼 **⌘C 를 두 번** 누르면 선택�
 
 | 동작 | 방법 |
 |---|---|
-| 번역 창 열기 | 텍스트 선택 후 **⌘C ⌘C** (0.4초 안에 두 번) |
+| 번역 창 열기 | 텍스트 선택 후 **⌘C ⌘C** (0.4초 안에 두 번). 설정에서 변경 가능 |
 | 번역 언어 바꾸기 | 창 상단 언어 선택 (바꾸면 즉시 재번역) |
 | 원문 수정 후 재번역 | 상단 원문 영역 편집 → **⌘⏎** |
 | 번역 결과 복사 | **⇧⌘C** 또는 복사 버튼 |
@@ -63,7 +63,10 @@ DeepL 데스크톱 클라이언트처럼 **⌘C 를 두 번** 누르면 선택�
 - **CLI 경로**: 자동 탐색이 실패하면 직접 지정 (`~/.local/bin/claude` 등)
 - **언어**: 기본 번역 언어와, 원문이 이미 그 언어일 때 사용할 언어
 - **표시 언어**: 시스템 설정 따름 / English / 한국어 / 日本語 (바꾸면 앱이 다시 시작됨)
-- **⌘C 두 번 인식 간격**, **바깥 클릭 시 닫기**
+- **단축키**: "변경…"을 누르고 원하는 조합을 누르면 됩니다(⌘·⌥·⌃ 중 하나 또는 펑션 키 필요). 실행 방식은
+  **두 번 누르기**(기본 ⌘C ⌘C처럼 복사 단축키를 겹쳐 쓰는 방식)와 **한 번 누르기**(⌃⌥T 같은 전용 단축키.
+  앱이 ⌘C를 대신 보내 선택 텍스트를 복사하고, 그 키 입력은 아래 앱에 전달되지 않음) 중 선택
+- **두 번 누름 인식 간격**, **바깥 클릭 시 닫기**
 
 ## 단축키가 안 잡힐 때
 
@@ -105,7 +108,8 @@ osascript -l JavaScript -e 'ObjC.import("Foundation"); $.NSDistributedNotificati
 Sources/QuickTranslate/
   main.swift                 앱 진입점 (메뉴바 전용, Dock 아이콘 없음)
   AppDelegate.swift          상태 표시줄 메뉴, 권한 처리, 클립보드 번역 트리거
-  DoubleCopyMonitor.swift    ⌘C ⌘C 감지
+  Hotkey.swift               단축키 모델, 키 이름, ⌘C 자동 전송
+  HotkeyMonitor.swift        단축키 감지 (CGEvent 탭)
   TranslationPanel.swift     플로팅 패널 (위치, 바깥 클릭 닫기, Esc)
   TranslationView.swift      패널 UI (SwiftUI)
   TranslationViewModel.swift 번역 상태 / 스트리밍 반영

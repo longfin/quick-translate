@@ -48,6 +48,16 @@
 "Interface language" = "表示言語";
 "System default" = "システム設定に従う";
 "Changing the interface language restarts the app." = "表示言語を変更するとアプリが再起動します。";
+"Translate Clipboard (%@)" = "クリップボードを翻訳 (%@)";
+"Shortcut" = "ショートカット";
+"Change…" = "変更…";
+"Press the new shortcut…" = "新しいショートカットを押してください…";
+"Reset to ⌘C ⌘C" = "⌘C ⌘C に戻す";
+"Trigger" = "実行方法";
+"Press twice" = "2回押す";
+"Press once" = "1回押す";
+"Double-press interval" = "2回押しの間隔";
+"When pressed once, the selected text is copied automatically first." = "1回押すモードでは、選択したテキストを自動的にコピーしてから翻訳します。";
 "Hotkey & Window" = "ショートカット / ウインドウ";
 "Double ⌘C interval" = "⌘C 2回押しの間隔";
 "%.2fs" = "%.2f秒";

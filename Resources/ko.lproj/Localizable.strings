@@ -48,6 +48,16 @@
 "Interface language" = "표시 언어";
 "System default" = "시스템 설정 따름";
 "Changing the interface language restarts the app." = "표시 언어를 바꾸면 앱이 다시 시작됩니다.";
+"Translate Clipboard (%@)" = "클립보드 번역 (%@)";
+"Shortcut" = "단축키";
+"Change…" = "변경…";
+"Press the new shortcut…" = "새 단축키를 누르세요…";
+"Reset to ⌘C ⌘C" = "⌘C ⌘C로 초기화";
+"Trigger" = "실행 방식";
+"Press twice" = "두 번 누르기";
+"Press once" = "한 번 누르기";
+"Double-press interval" = "두 번 누름 인식 간격";
+"When pressed once, the selected text is copied automatically first." = "한 번 누르기 모드에서는 선택한 텍스트를 자동으로 복사한 뒤 번역합니다.";
 "Hotkey & Window" = "단축키 / 창";
 "Double ⌘C interval" = "⌘C 두 번 인식 간격";
 "%.2fs" = "%.2f초";

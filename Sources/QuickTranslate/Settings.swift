@@ -42,6 +42,13 @@ final class AppSettings: ObservableObject {
     @Published var claudePath: String { didSet { defaults.set(claudePath, forKey: "claudePath") } }
     @Published var codexPath: String { didSet { defaults.set(codexPath, forKey: "codexPath") } }
     @Published var keepClaudeWarm: Bool { didSet { defaults.set(keepClaudeWarm, forKey: "keepClaudeWarm") } }
+    @Published var hotkey: HotkeyConfig {
+        didSet {
+            defaults.set(Int(hotkey.keyCode), forKey: "hotkeyKeyCode")
+            defaults.set(String(hotkey.modifiers), forKey: "hotkeyModifiers")
+            defaults.set(hotkey.doublePress, forKey: "hotkeyDoublePress")
+        }
+    }
     @Published var doublePressInterval: Double { didSet { defaults.set(doublePressInterval, forKey: "doublePressInterval") } }
     @Published var closeOnOutsideClick: Bool { didSet { defaults.set(closeOnOutsideClick, forKey: "closeOnOutsideClick") } }
 
@@ -71,6 +78,11 @@ final class AppSettings: ObservableObject {
         claudePath = defaults.string(forKey: "claudePath") ?? ""
         codexPath = defaults.string(forKey: "codexPath") ?? ""
         keepClaudeWarm = defaults.object(forKey: "keepClaudeWarm") as? Bool ?? true
+        var hk = HotkeyConfig.default
+        if let code = defaults.object(forKey: "hotkeyKeyCode") as? Int { hk.keyCode = UInt16(code) }
+        if let mods = defaults.string(forKey: "hotkeyModifiers"), let m = UInt64(mods) { hk.modifiers = m }
+        if let dbl = defaults.object(forKey: "hotkeyDoublePress") as? Bool { hk.doublePress = dbl }
+        hotkey = hk
         doublePressInterval = defaults.object(forKey: "doublePressInterval") as? Double ?? 0.4
         closeOnOutsideClick = defaults.object(forKey: "closeOnOutsideClick") as? Bool ?? true
         uiLanguage = defaults.string(forKey: "uiLanguage") ?? "system"

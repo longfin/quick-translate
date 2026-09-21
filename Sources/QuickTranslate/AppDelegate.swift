@@ -6,7 +6,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
     private let settings = AppSettings.shared
     private lazy var panelController = TranslationPanelController(settings: settings)
-    private var hotkey: DoubleCopyMonitor?
+    private var hotkey: HotkeyMonitor?
+    private var translateMenuItem: NSMenuItem?
     private var settingsWindow: NSWindow?
     private var accessibilityTimer: Timer?
     private let secureInputWarningItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -17,8 +18,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Log.write("ui localization: \(Bundle.main.preferredLocalizations) e.g. \(L("Settings…"))")
         setupStatusItem()
 
-        hotkey = DoubleCopyMonitor(interval: { [settings] in settings.doublePressInterval }) { [weak self] in
-            self?.translateClipboard(afterDelay: 0.15)
+        hotkey = HotkeyMonitor(config: { [settings] in settings.hotkey },
+                               interval: { [settings] in settings.doublePressInterval }) { [weak self] cfg in
+            if cfg.doublePress {
+                self?.translateClipboard(afterDelay: 0.15)   // the app's own ⌘C is still landing on the pasteboard
+            } else {
+                self?.copySelectionAndTranslate()
+            }
         }
         ensureAccessibility()
         TranslationEngine.shared.prewarm(settings: settings)
@@ -50,8 +56,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.delegate = self
         secureInputWarningItem.isHidden = true
         menu.addItem(secureInputWarningItem)
-        let translateItem = NSMenuItem(title: L("Translate Clipboard (⌘C ⌘C)"), action: #selector(translateClipboardAction), keyEquivalent: "")
+        let translateItem = NSMenuItem(title: L("Translate Clipboard (%@)", settings.hotkey.display), action: #selector(translateClipboardAction), keyEquivalent: "")
         translateItem.target = self
+        translateMenuItem = translateItem
         menu.addItem(translateItem)
         menu.addItem(.separator())
 
@@ -87,6 +94,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         accessibilityMenuItem?.isHidden = AXIsProcessTrusted()
+        translateMenuItem?.title = L("Translate Clipboard (%@)", settings.hotkey.display)
         if let warning = SecureInput.warningText() {
             secureInputWarningItem.title = "⚠️ " + warning
             secureInputWarningItem.isHidden = false
@@ -135,6 +143,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // Give the frontmost app a moment to finish writing the pasteboard after the second ⌘C.
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self else { return }
+            let text = NSPasteboard.general.string(forType: .string) ?? ""
+            self.panelController.show(text: text)
+        }
+    }
+
+    /// Single-press shortcuts: copy the selection ourselves, then translate whatever landed on the pasteboard.
+    private func copySelectionAndTranslate() {
+        let before = NSPasteboard.general.changeCount
+        Hotkey.postCopyKeystroke()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            guard let self else { return }
+            if NSPasteboard.general.changeCount == before {
+                Log.write("copy keystroke did not change the pasteboard; translating existing clipboard")
+            }
             let text = NSPasteboard.general.string(forType: .string) ?? ""
             self.panelController.show(text: text)
         }
