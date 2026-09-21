@@ -8,7 +8,7 @@ struct SettingsView: View {
     @State private var detectedPath: String = ""
     @State private var testResult: String = ""
     @State private var testing = false
-    private let engine = TranslationEngine()
+    private let engine = TranslationEngine.shared
     private let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -21,6 +21,7 @@ struct SettingsView: View {
                 case .claude:
                     TextField("Model (haiku / sonnet / opus)", text: $settings.claudeModel)
                     TextField("claude path (blank = auto-detect)", text: $settings.claudePath)
+                    Toggle("Keep Claude running in the background (faster, ~300 MB RAM)", isOn: $settings.keepClaudeWarm)
                 case .codex:
                     TextField("Model (blank = codex default)", text: $settings.codexModel)
                     TextField("codex path (blank = auto-detect)", text: $settings.codexPath)
@@ -101,7 +102,9 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 540, height: 500)
         .onAppear { refreshDetectedPath() }
-        .onChange(of: settings.backend) { _ in refreshDetectedPath() }
+        .onChange(of: settings.backend) { _ in refreshDetectedPath(); engine.prewarm(settings: settings) }
+        .onChange(of: settings.keepClaudeWarm) { _ in engine.prewarm(settings: settings) }
+        .onChange(of: settings.claudeModel) { _ in engine.prewarm(settings: settings) }
         .onChange(of: settings.claudePath) { _ in refreshDetectedPath() }
         .onChange(of: settings.codexPath) { _ in refreshDetectedPath() }
         .onReceive(timer) { _ in

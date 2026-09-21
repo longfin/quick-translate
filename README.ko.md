@@ -58,6 +58,8 @@ DeepL 데스크톱 클라이언트처럼 **⌘C 를 두 번** 누르면 선택�
 
 - **엔진**: Claude (Claude Code CLI) / ChatGPT (Codex CLI)
 - **모델**: Claude는 `haiku`(기본, 가장 빠름) / `sonnet` / `opus`, Codex는 비우면 기본 모델
+- **Claude를 백그라운드에 상주**: 기본 켬. `claude` 프로세스(약 300MB)를 띄워둬서 번역 1건이 약 2초에서 0.7~1.3초로 줄어듭니다.
+  끄면 번역마다 새 프로세스를 띄웁니다.
 - **CLI 경로**: 자동 탐색이 실패하면 직접 지정 (`~/.local/bin/claude` 등)
 - **언어**: 기본 번역 언어와, 원문이 이미 그 언어일 때 사용할 언어
 - **표시 언어**: 시스템 설정 따름 / English / 한국어 / 日本語 (바꾸면 앱이 다시 시작됨)
@@ -91,7 +93,10 @@ osascript -l JavaScript -e 'ObjC.import("Foundation"); $.NSDistributedNotificati
 - `NSEvent` 전역 키 모니터로 ⌘C 두 번을 감지하고, 클립보드 문자열을 읽어 플로팅 패널(`NSPanel`)을 마우스 근처에 띄웁니다.
 - Claude: `claude -p --output-format stream-json --include-partial-messages --tools "" --strict-mcp-config --setting-sources ""`
   로 실행해 토큰 단위 스트리밍으로 결과를 표시합니다. 사용자 설정·훅·MCP 서버를 로드하지 않아 빠르게 뜨고,
-  확장 사고(thinking)를 꺼서(`MAX_THINKING_TOKENS=0`) `haiku` 기준 번역 한 건이 약 1.5초에 끝납니다.
+  확장 사고(thinking)는 꺼둡니다(`MAX_THINKING_TOKENS=0`).
+- "Claude 상주"가 켜져 있으면 `claude -p --input-format stream-json` 프로세스 하나를 계속 살려둡니다. 번역 1건이 사용자 메시지 1개이고,
+  결과를 받은 뒤 `/clear`를 보내 CLI가 로컬에서 대화를 비우므로 매번 새 컨텍스트로 시작하면서도 프로세스·연결·프롬프트 캐시는 warm 상태를 유지합니다.
+  취소하거나 모델을 바꾸면 프로세스를 다시 띄웁니다.
 - Codex: `codex exec -s read-only -o <file>` 로 실행하고 마지막 메시지를 읽습니다 (스트리밍 없음).
 
 ## 프로젝트 구조
@@ -105,6 +110,7 @@ Sources/QuickTranslate/
   TranslationView.swift      패널 UI (SwiftUI)
   TranslationViewModel.swift 번역 상태 / 스트리밍 반영
   TranslationEngine.swift    claude / codex CLI 호출 및 출력 파싱
+  ClaudeWorker.swift         상주 claude 프로세스 (stream-json 입출력, 턴 사이 /clear)
   ProcessJob.swift           자식 프로세스 실행 + stdout 라인 스트리밍
   CLILocator.swift           CLI 바이너리 탐색 (Finder에서 실행 시 PATH 보정)
   Settings.swift             UserDefaults 기반 설정

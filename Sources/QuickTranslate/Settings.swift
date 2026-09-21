@@ -41,6 +41,7 @@ final class AppSettings: ObservableObject {
     @Published var fallbackLanguage: String { didSet { defaults.set(fallbackLanguage, forKey: "fallbackLanguage") } }
     @Published var claudePath: String { didSet { defaults.set(claudePath, forKey: "claudePath") } }
     @Published var codexPath: String { didSet { defaults.set(codexPath, forKey: "codexPath") } }
+    @Published var keepClaudeWarm: Bool { didSet { defaults.set(keepClaudeWarm, forKey: "keepClaudeWarm") } }
     @Published var doublePressInterval: Double { didSet { defaults.set(doublePressInterval, forKey: "doublePressInterval") } }
     @Published var closeOnOutsideClick: Bool { didSet { defaults.set(closeOnOutsideClick, forKey: "closeOnOutsideClick") } }
 
@@ -69,6 +70,7 @@ final class AppSettings: ObservableObject {
         fallbackLanguage = defaults.string(forKey: "fallbackLanguage") ?? systemDefaults.fallback
         claudePath = defaults.string(forKey: "claudePath") ?? ""
         codexPath = defaults.string(forKey: "codexPath") ?? ""
+        keepClaudeWarm = defaults.object(forKey: "keepClaudeWarm") as? Bool ?? true
         doublePressInterval = defaults.object(forKey: "doublePressInterval") as? Double ?? 0.4
         closeOnOutsideClick = defaults.object(forKey: "closeOnOutsideClick") as? Bool ?? true
         uiLanguage = defaults.string(forKey: "uiLanguage") ?? "system"

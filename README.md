@@ -60,6 +60,8 @@ Menu bar icon → **Settings…**
 
 - **Engine**: Claude (Claude Code CLI) or ChatGPT (Codex CLI)
 - **Model**: for Claude `haiku` (default, fastest) / `sonnet` / `opus`; for Codex leave blank for the default
+- **Keep Claude running in the background**: on by default. A resident `claude` process (~300 MB) makes each
+  translation about 0.7–1.3 s instead of ~2 s. Turn it off to spawn a fresh process per translation.
 - **CLI path**: set manually if auto-detection fails (e.g. `~/.local/bin/claude`)
 - **Languages**: default target language and the fallback used when the text is already in it
 - **Interface language**: follow the system, or force English / 한국어 / 日本語 (the app restarts to apply)
@@ -96,8 +98,11 @@ language, create `Resources/<lang>.lproj/Localizable.strings` (keys are the Engl
   non-activating floating `NSPanel` near the mouse. The panel never steals focus from the app you are in.
 - Claude: runs `claude -p --output-format stream-json --include-partial-messages --tools "" --strict-mcp-config --setting-sources ""`
   and streams tokens into the panel. The flags skip your user settings, hooks and MCP servers so it starts fast
-  and sends only a few hundred input tokens. Extended thinking is disabled (`MAX_THINKING_TOKENS=0`), which
-  brings a typical `haiku` translation to about 1.5 s end to end.
+  and sends only a few hundred input tokens. Extended thinking is disabled (`MAX_THINKING_TOKENS=0`).
+- With "Keep Claude running" on, a single `claude -p --input-format stream-json` process stays alive. Each
+  translation is one user message; after the result the app sends `/clear`, which the CLI handles locally, so
+  every translation starts from a fresh context while the process, connection and prompt cache stay warm.
+  Cancelling or changing the model restarts the process.
 - Codex: runs `codex exec -s read-only -o <file>` and reads the final message (no streaming).
 
 ## Project layout
@@ -112,6 +117,7 @@ Sources/QuickTranslate/
   TranslationView.swift      panel UI (SwiftUI)
   TranslationViewModel.swift translation state / streaming
   TranslationEngine.swift    claude / codex invocation and output parsing
+  ClaudeWorker.swift         resident claude process (stream-json in/out, /clear between turns)
   ProcessJob.swift           child process runner with line-streamed stdout
   CLILocator.swift           finds the CLI binaries (Finder-launched apps have a minimal PATH)
   Settings.swift             UserDefaults-backed settings

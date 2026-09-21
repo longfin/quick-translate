@@ -38,6 +38,7 @@
 "claude path (blank = auto-detect)" = "claude のパス（空欄で自動検出）";
 "Model (blank = codex default)" = "モデル（空欄で codex のデフォルト）";
 "codex path (blank = auto-detect)" = "codex のパス（空欄で自動検出）";
+"Keep Claude running in the background (faster, ~300 MB RAM)" = "Claude をバックグラウンドで常駐させる（高速、メモリ約300MB）";
 "CLI not found" = "CLI が見つかりません";
 "Test" = "テスト";
 "Testing…" = "テスト中…";

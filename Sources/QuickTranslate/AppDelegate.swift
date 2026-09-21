@@ -21,6 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self?.translateClipboard(afterDelay: 0.15)
         }
         ensureAccessibility()
+        TranslationEngine.shared.prewarm(settings: settings)
 
         // External trigger (e.g. Raycast / Hammerspoon / scripts):
         //   osascript -l JavaScript -e 'ObjC.import("Foundation"); $.NSDistributedNotificationCenter.defaultCenter.postNotificationNameObject("dev.swen.QuickTranslate.translate", null)'
@@ -30,6 +31,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             name: Notification.Name("dev.swen.QuickTranslate.translate"),
             object: nil
         )
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        ClaudeWorker.shared.shutdown()
     }
 
     // MARK: - Status bar

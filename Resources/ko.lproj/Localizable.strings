@@ -38,6 +38,7 @@
 "claude path (blank = auto-detect)" = "claude 경로 (비우면 자동 탐색)";
 "Model (blank = codex default)" = "모델 (비우면 codex 기본값)";
 "codex path (blank = auto-detect)" = "codex 경로 (비우면 자동 탐색)";
+"Keep Claude running in the background (faster, ~300 MB RAM)" = "Claude를 백그라운드에 상주시키기 (더 빠름, 메모리 약 300MB)";
 "CLI not found" = "CLI를 찾을 수 없습니다";
 "Test" = "테스트";
 "Testing…" = "테스트 중…";

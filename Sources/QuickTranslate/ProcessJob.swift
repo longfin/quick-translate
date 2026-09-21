@@ -1,7 +1,11 @@
 import Foundation
 
+protocol TranslationJob: AnyObject {
+    func cancel()
+}
+
 /// Runs a child process, streams stdout line-by-line, and reports exit.
-final class ProcessJob {
+final class ProcessJob: TranslationJob {
     private let process = Process()
     private let stdoutPipe = Pipe()
     private let stderrPipe = Pipe()

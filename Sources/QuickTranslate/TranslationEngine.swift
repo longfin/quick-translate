@@ -8,6 +8,26 @@ enum TranslationEvent {
 
 /// Talks to the locally installed `claude` (Claude subscription) or `codex` (ChatGPT subscription) CLI.
 final class TranslationEngine {
+    static let shared = TranslationEngine()
+
+    /// Spawn the resident Claude process ahead of time (no-op when disabled or not using Claude).
+    func prewarm(settings: AppSettings) {
+        guard settings.backend == .claude, settings.keepClaudeWarm,
+              let exe = CLILocator.find("claude", override: settings.claudePath) else {
+            ClaudeWorker.shared.shutdown()
+            return
+        }
+        ClaudeWorker.shared.prewarm(exe: exe, model: settings.claudeModel.trimmingCharacters(in: .whitespaces))
+    }
+
+    /// The instruction line must end with a colon: with a full stop before the blank line, haiku
+    /// (without thinking) tends to answer "please provide the text" instead of translating.
+    static func instruction(source: String?, target: String, fallback: String) -> String {
+        if let source, source != target {
+            return "Translate from \(source) into \(target):"
+        }
+        return "Translate into \(target), or into \(fallback) if the text is already mostly \(target):"
+    }
 
     static func systemPrompt(source: String?, target: String, fallback: String) -> String {
         let task: String
@@ -34,7 +54,7 @@ final class TranslationEngine {
                    target: String,
                    fallback: String,
                    settings: AppSettings,
-                   onEvent: @escaping (TranslationEvent) -> Void) -> ProcessJob? {
+                   onEvent: @escaping (TranslationEvent) -> Void) -> TranslationJob? {
         let emit: (TranslationEvent) -> Void = { e in DispatchQueue.main.async { onEvent(e) } }
         let prompt = Self.systemPrompt(source: source, target: target, fallback: fallback)
         let backend = settings.backend
@@ -47,6 +67,12 @@ final class TranslationEngine {
         Log.write("using \(backend.rawValue) at \(exe)")
         switch backend {
         case .claude:
+            if settings.keepClaudeWarm {
+                return ClaudeWorker.shared.translate(
+                    exe: exe, model: settings.claudeModel.trimmingCharacters(in: .whitespaces),
+                    instruction: Self.instruction(source: source, target: target, fallback: fallback),
+                    text: text, onEvent: emit)
+            }
             return runClaude(exe: exe, prompt: prompt, text: text, model: settings.claudeModel, emit: emit)
         case .codex:
             return runCodex(exe: exe, prompt: prompt, text: text, model: settings.codexModel, emit: emit)

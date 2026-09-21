@@ -13,8 +13,8 @@ final class TranslationViewModel: ObservableObject {
     @Published var cancelled = false
 
     let settings: AppSettings
-    private let engine = TranslationEngine()
-    private var job: ProcessJob?
+    private let engine = TranslationEngine.shared
+    private var job: TranslationJob?
     private var generation = 0
     private var copiedResetWork: DispatchWorkItem?
 
@@ -69,7 +69,7 @@ final class TranslationViewModel: ObservableObject {
                 self.translatedText += t
             case .finished(let full):
                 if !full.isEmpty { self.translatedText = full }
-                Log.write("translate finished chars=\(self.translatedText.count)")
+                Log.write("translate finished chars=\(self.translatedText.count) preview=\(String(self.translatedText.prefix(40)).replacingOccurrences(of: "\n", with: " "))")
                 self.isLoading = false
                 self.job = nil
             case .failed(let msg):
