@@ -6,6 +6,12 @@ A tiny macOS menu bar app: press **⌘C twice** and a translation of the selecte
 your cursor, like the DeepL desktop client. No API keys. It uses the **Claude Code CLI** (your Claude
 subscription) or the **Codex CLI** (your ChatGPT subscription) that you already have installed and logged in.
 
+## Privacy
+
+The app sends the text you translate to the CLI you chose, which sends it to Anthropic (Claude) or
+OpenAI (Codex) under your own account. Nothing else leaves your machine: no analytics, no crash
+reporting, no API keys. Usage counts against your subscription like any other CLI use.
+
 ## Requirements
 
 - macOS 13+, Swift 5.9+ toolchain (Xcode Command Line Tools are enough)
@@ -110,3 +116,11 @@ Sources/QuickTranslate/
 Resources/
   Info.plist, en/ko/ja.lproj/Localizable.strings
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+[MIT](LICENSE)

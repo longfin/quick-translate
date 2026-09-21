@@ -5,6 +5,11 @@
 DeepL 데스크톱 클라이언트처럼 **⌘C 를 두 번** 누르면 선택한 텍스트의 번역 창이 바로 뜨는 macOS 메뉴바 앱입니다.
 별도 API 키 없이 로컬에 설치된 **Claude Code CLI(Claude 구독)** 또는 **Codex CLI(ChatGPT 구독)** 를 그대로 사용합니다.
 
+## 개인정보
+
+번역할 텍스트는 선택한 CLI를 통해 본인 계정으로 Anthropic(Claude) 또는 OpenAI(Codex)에 전송됩니다.
+그 외에는 아무것도 나가지 않습니다. 통계 수집, 크래시 리포트, API 키 모두 없습니다. 사용량은 일반 CLI 사용과 똑같이 구독에 포함됩니다.
+
 ## 요구 사항
 
 - macOS 13 이상, Swift 5.9+ 툴체인 (Xcode Command Line Tools면 충분)
@@ -101,3 +106,11 @@ Sources/QuickTranslate/
   Settings.swift             UserDefaults 기반 설정
   SettingsView.swift         설정 창
 ```
+
+## 기여
+
+[CONTRIBUTING.md](CONTRIBUTING.md) (영어)를 참고하세요.
+
+## 라이선스
+
+[MIT](LICENSE)
