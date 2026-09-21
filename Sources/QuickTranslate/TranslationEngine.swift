@@ -72,10 +72,12 @@ final class TranslationEngine {
         if !m.isEmpty { args += ["--model", m] }
 
         let state = ResultState()
+        var env = CLILocator.environment()
+        env["MAX_THINKING_TOKENS"] = "0"   // translation needs no extended thinking; this halves latency
         let job = ProcessJob(
             executable: exe,
             arguments: args,
-            environment: CLILocator.environment(),
+            environment: env,
             currentDirectory: Self.scratchDirectory(),
             input: text.hasSuffix("\n") ? text : text + "\n",
             onLine: { line in

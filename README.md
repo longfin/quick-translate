@@ -96,7 +96,8 @@ language, create `Resources/<lang>.lproj/Localizable.strings` (keys are the Engl
   non-activating floating `NSPanel` near the mouse. The panel never steals focus from the app you are in.
 - Claude: runs `claude -p --output-format stream-json --include-partial-messages --tools "" --strict-mcp-config --setting-sources ""`
   and streams tokens into the panel. The flags skip your user settings, hooks and MCP servers so it starts fast
-  and sends only a few hundred input tokens.
+  and sends only a few hundred input tokens. Extended thinking is disabled (`MAX_THINKING_TOKENS=0`), which
+  brings a typical `haiku` translation to about 1.5 s end to end.
 - Codex: runs `codex exec -s read-only -o <file>` and reads the final message (no streaming).
 
 ## Project layout

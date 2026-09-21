@@ -90,7 +90,8 @@ osascript -l JavaScript -e 'ObjC.import("Foundation"); $.NSDistributedNotificati
 
 - `NSEvent` 전역 키 모니터로 ⌘C 두 번을 감지하고, 클립보드 문자열을 읽어 플로팅 패널(`NSPanel`)을 마우스 근처에 띄웁니다.
 - Claude: `claude -p --output-format stream-json --include-partial-messages --tools "" --strict-mcp-config --setting-sources ""`
-  로 실행해 토큰 단위 스트리밍으로 결과를 표시합니다. 사용자 설정·훅·MCP 서버를 로드하지 않아 빠르게 뜹니다.
+  로 실행해 토큰 단위 스트리밍으로 결과를 표시합니다. 사용자 설정·훅·MCP 서버를 로드하지 않아 빠르게 뜨고,
+  확장 사고(thinking)를 꺼서(`MAX_THINKING_TOKENS=0`) `haiku` 기준 번역 한 건이 약 1.5초에 끝납니다.
 - Codex: `codex exec -s read-only -o <file>` 로 실행하고 마지막 메시지를 읽습니다 (스트리밍 없음).
 
 ## 프로젝트 구조
