@@ -18,6 +18,7 @@ mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/${APP_NAME}"
 cp Resources/Info.plist "$APP_DIR/Contents/Info.plist"
 cp -R Resources/*.lproj "$APP_DIR/Contents/Resources/"
+cp Resources/AppIcon.icns Resources/MenuBarIcon.png Resources/MenuBarIcon@2x.png "$APP_DIR/Contents/Resources/"
 echo "APPL????" > "$APP_DIR/Contents/PkgInfo"
 
 # Prefer an explicit identity; else a local self-signed "QuickTranslate Dev" cert if present; else ad-hoc.

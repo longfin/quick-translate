@@ -37,8 +37,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "character.bubble", accessibilityDescription: "QuickTranslate")
-                ?? NSImage(systemSymbolName: "globe", accessibilityDescription: "QuickTranslate")
+            button.image = Self.menuBarIcon()
+                ?? NSImage(systemSymbolName: "character.bubble", accessibilityDescription: "QuickTranslate")
         }
 
         let menu = NSMenu()
@@ -63,6 +63,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         menu.addItem(NSMenuItem(title: L("Quit QuickTranslate"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
+    }
+
+    /// Template image (black + alpha) so macOS tints it for light/dark menu bars.
+    private static func menuBarIcon() -> NSImage? {
+        guard let url = Bundle.main.url(forResource: "MenuBarIcon", withExtension: "png"),
+              let image = NSImage(contentsOf: url) else { return nil }
+        if let url2x = Bundle.main.url(forResource: "MenuBarIcon@2x", withExtension: "png"),
+           let rep = NSImageRep(contentsOf: url2x) {
+            rep.size = NSSize(width: 18, height: 18)
+            image.addRepresentation(rep)
+        }
+        image.size = NSSize(width: 18, height: 18)
+        image.isTemplate = true
+        image.accessibilityDescription = "QuickTranslate"
+        return image
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {

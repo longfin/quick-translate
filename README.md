@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/logo.png" width="128" alt="QuickTranslate icon"></p>
+
 # QuickTranslate
 
 English · [한국어](README.ko.md)
@@ -115,7 +117,8 @@ Sources/QuickTranslate/
   SettingsView.swift         settings window
   L10n.swift                 localization helper
 Resources/
-  Info.plist, en/ko/ja.lproj/Localizable.strings
+  Info.plist, AppIcon.icns, MenuBarIcon{,@2x}.png, en/ko/ja.lproj/Localizable.strings
+  Icon/generate.swift        draws the icons; regenerate with ./build-icons.sh
 ```
 
 ## Contributing

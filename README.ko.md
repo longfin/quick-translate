@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/logo.png" width="128" alt="QuickTranslate 아이콘"></p>
+
 # QuickTranslate
 
 [English](README.md) · 한국어
