@@ -26,13 +26,23 @@ struct TranslationView: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(.secondary)
             Spacer()
-            Picker("", selection: $vm.targetLanguage) {
+            if let detected = vm.detectedLanguage {
+                Text(LocalizedStringKey(detected))
+                    .font(.system(size: 12))
+            } else {
+                Text("Auto-detect")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+            }
+            Image(systemName: "arrow.right")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(.secondary)
+            Picker("", selection: Binding(get: { vm.targetLanguage }, set: { vm.setTarget($0) })) {
                 ForEach(AppSettings.languages, id: \.self) { Text(LocalizedStringKey($0)).tag($0) }
             }
             .labelsHidden()
             .controlSize(.small)
-            .frame(width: 160)
-            .onChange(of: vm.targetLanguage) { _ in vm.retranslate() }
+            .frame(width: 150)
 
             Button {
                 vm.pinned.toggle()

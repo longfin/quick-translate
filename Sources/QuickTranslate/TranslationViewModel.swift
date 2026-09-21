@@ -7,6 +7,7 @@ final class TranslationViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var targetLanguage: String
+    @Published var detectedLanguage: String?
     @Published var pinned = false
     @Published var copied = false
 
@@ -21,8 +22,18 @@ final class TranslationViewModel: ObservableObject {
         self.targetLanguage = settings.targetLanguage
     }
 
+    /// New clipboard text: detect its language and choose the target automatically.
     func translate(text: String) {
         sourceText = text
+        detectedLanguage = LanguageDetector.detect(text)
+        targetLanguage = detectedLanguage == settings.targetLanguage ? settings.fallbackLanguage : settings.targetLanguage
+        retranslate()
+    }
+
+    /// Manual pick from the picker overrides detection until the next clipboard text.
+    func setTarget(_ language: String) {
+        guard language != targetLanguage else { return }
+        targetLanguage = language
         retranslate()
     }
 
@@ -45,8 +56,11 @@ final class TranslationViewModel: ObservableObject {
         let fallback = targetLanguage == settings.fallbackLanguage
             ? settings.targetLanguage
             : settings.fallbackLanguage
+        let source = detectedLanguage ?? LanguageDetector.detect(text)
+        detectedLanguage = source
+        Log.write("detected=\(source ?? "?") target=\(targetLanguage)")
 
-        job = engine.translate(text: text, target: targetLanguage, fallback: fallback, settings: settings) { [weak self] event in
+        job = engine.translate(text: text, source: source, target: targetLanguage, fallback: fallback, settings: settings) { [weak self] event in
             guard let self, gen == self.generation else { return }
             switch event {
             case .delta(let t):

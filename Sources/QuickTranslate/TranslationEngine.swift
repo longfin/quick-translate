@@ -9,11 +9,19 @@ enum TranslationEvent {
 /// Talks to the locally installed `claude` (Claude subscription) or `codex` (ChatGPT subscription) CLI.
 final class TranslationEngine {
 
-    static func systemPrompt(target: String, fallback: String) -> String {
-        """
+    static func systemPrompt(source: String?, target: String, fallback: String) -> String {
+        let task: String
+        if let source, source != target {
+            task = "Translate the text provided by the user from \(source) into \(target)."
+        } else {
+            task = """
+            Translate the text provided by the user into \(target).
+            If the text is already written mostly in \(target), translate it into \(fallback) instead.
+            """
+        }
+        return """
         You are a professional translation engine.
-        Translate the text provided by the user into \(target).
-        If the text is already written mostly in \(target), translate it into \(fallback) instead.
+        \(task)
         Preserve the original meaning, tone, formatting, line breaks, markdown and code blocks. Do not translate code identifiers, URLs or proper nouns that are normally left as-is.
         Output ONLY the translated text. No explanations, no notes, no quotes, no preamble.
         """
@@ -22,12 +30,13 @@ final class TranslationEngine {
     /// Starts a translation. Events are delivered on the main queue.
     @discardableResult
     func translate(text: String,
+                   source: String? = nil,
                    target: String,
                    fallback: String,
                    settings: AppSettings,
                    onEvent: @escaping (TranslationEvent) -> Void) -> ProcessJob? {
         let emit: (TranslationEvent) -> Void = { e in DispatchQueue.main.async { onEvent(e) } }
-        let prompt = Self.systemPrompt(target: target, fallback: fallback)
+        let prompt = Self.systemPrompt(source: source, target: target, fallback: fallback)
         let backend = settings.backend
 
         guard let exe = CLILocator.find(backend.executableName, override: settings.currentPathOverride) else {
