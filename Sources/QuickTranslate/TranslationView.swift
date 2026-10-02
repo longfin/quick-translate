@@ -3,7 +3,6 @@ import SwiftUI
 struct TranslationView: View {
     @ObservedObject var vm: TranslationViewModel
     @ObservedObject var settings: AppSettings
-    var onClose: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -16,6 +15,7 @@ struct TranslationView: View {
             footer
         }
         .frame(minWidth: 380, minHeight: 240)
+        .ignoresSafeArea(.container, edges: .top)   // header shares the titlebar row with the window buttons
     }
 
     private var header: some View {
@@ -51,17 +51,10 @@ struct TranslationView: View {
             }
             .buttonStyle(.borderless)
             .help(vm.pinned ? "Unpin" : "Pin window (stays open when clicking outside)")
-
-            Button(action: onClose) {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(.secondary)
-            }
-            .buttonStyle(.borderless)
-            .keyboardShortcut("w", modifiers: .command)
-            .help("Close (Esc)")
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.leading, 78)   // room for the window's close / minimize / zoom buttons
+        .padding(.trailing, 12)
+        .frame(height: 28)       // titlebar height, so the header lines up with those buttons
     }
 
     private var sourceArea: some View {

@@ -2,13 +2,31 @@ import AppKit
 import SwiftUI
 
 final class TranslationPanel: NSPanel {
-    var onEscape: (() -> Void)?
+    var onClose: (() -> Void)?
 
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 
     override func cancelOperation(_ sender: Any?) {
-        onEscape?()
+        onClose?()
+    }
+
+    // The close button (and ⌘W below) go through the controller so a running translation is cancelled.
+    override func performClose(_ sender: Any?) {
+        onClose?()
+    }
+
+    // LSUIElement app: there is no Window menu to supply ⌘W / ⌘M.
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        if mods == .command {
+            switch event.charactersIgnoringModifiers {
+            case "w": performClose(nil); return true
+            case "m": miniaturize(nil); return true
+            default: break
+            }
+        }
+        return super.performKeyEquivalent(with: event)
     }
 }
 
@@ -27,15 +45,12 @@ final class TranslationPanelController {
 
         panel = TranslationPanel(
             contentRect: NSRect(origin: .zero, size: Self.defaultSize),
-            styleMask: [.titled, .fullSizeContentView, .nonactivatingPanel, .resizable, .utilityWindow],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
         panel.titleVisibility = .hidden
         panel.titlebarAppearsTransparent = true
-        panel.standardWindowButton(.closeButton)?.isHidden = true
-        panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
-        panel.standardWindowButton(.zoomButton)?.isHidden = true
         panel.level = .floating
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = false
@@ -45,15 +60,16 @@ final class TranslationPanelController {
         panel.minSize = NSSize(width: 380, height: 240)
         panel.setFrameAutosaveName("QuickTranslatePanel")
 
-        let root = TranslationView(vm: viewModel, settings: settings) { [weak self] in self?.hide() }
-        panel.contentView = NSHostingView(rootView: root)
-        panel.onEscape = { [weak self] in self?.hide() }
+        panel.contentView = NSHostingView(rootView: TranslationView(vm: viewModel, settings: settings))
+        panel.onClose = { [weak self] in self?.hide() }
     }
 
     var isVisible: Bool { panel.isVisible }
 
     func show(text: String) {
-        if !panel.isVisible {
+        if panel.isMiniaturized {
+            panel.deminiaturize(nil)
+        } else if !panel.isVisible {
             positionNearMouse()
         }
         panel.makeKeyAndOrderFront(nil)
@@ -86,6 +102,7 @@ final class TranslationPanelController {
         guard outsideClickMonitor == nil else { return }
         outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
             guard let self, self.settings.closeOnOutsideClick, !self.viewModel.pinned,
+                  !self.panel.isMiniaturized,
                   !self.viewModel.isLoading   // keep the panel up until the translation is done
             else { return }
             Log.write("panel hidden (outside click)")

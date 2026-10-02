@@ -48,7 +48,8 @@ once it is granted so macOS starts delivering key events.
 | Change target language | Picker at the top of the popup (retranslates immediately) |
 | Edit the source and retranslate | Edit the text at the top, then **⌘⏎** |
 | Copy the translation | **⇧⌘C** or the Copy button |
-| Close | **Esc**, ⌘W, or click outside (not while a translation is still running) |
+| Close | **Esc**, ⌘W, the window's close button, or click outside (not while a translation is still running) |
+| Minimize / zoom | ⌘M or the window buttons; the next shortcut press brings it back |
 | Cancel a running translation | **⌘.** or the Cancel button (partial text stays) |
 | Keep it open | 📌 pin button |
 

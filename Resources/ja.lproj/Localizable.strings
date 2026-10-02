@@ -8,7 +8,6 @@
 /* Panel */
 "Unpin" = "固定を解除";
 "Pin window (stays open when clicking outside)" = "ウインドウを固定（外側をクリックしても閉じない）";
-"Close (Esc)" = "閉じる (Esc)";
 "Auto-detect" = "自動検出";
 "Cancel" = "キャンセル";
 "Cancelled" = "キャンセルしました";
