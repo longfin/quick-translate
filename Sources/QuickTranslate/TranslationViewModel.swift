@@ -33,7 +33,7 @@ final class TranslationViewModel: ObservableObject {
 
     /// Manual pick from the picker overrides detection until the next clipboard text.
     func setTarget(_ language: String) {
-        guard language != targetLanguage else { return }
+        guard language != targetLanguage, language != detectedLanguage else { return }
         targetLanguage = language
         retranslate()
     }

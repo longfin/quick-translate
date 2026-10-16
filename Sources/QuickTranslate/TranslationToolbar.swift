@@ -8,6 +8,7 @@ final class TranslationToolbar: NSObject, NSToolbarDelegate {
     private static let pinID = NSToolbarItem.Identifier("pin")
 
     private let vm: TranslationViewModel
+    private let sourceLabel = NSTextField(labelWithString: "")
     private let popUp = NSPopUpButton(frame: .zero, pullsDown: false)
     private var pinItem: NSToolbarItem?
     private var observers: Set<AnyCancellable> = []
@@ -20,6 +21,12 @@ final class TranslationToolbar: NSObject, NSToolbarDelegate {
         popUp.target = self
         popUp.action = #selector(languageChosen)
         popUp.toolTip = L("Target language")
+        popUp.autoenablesItems = false
+        for language in AppSettings.languages {
+            popUp.addItem(withTitle: L(language))
+            popUp.lastItem?.representedObject = language
+        }
+        sourceLabel.textColor = .secondaryLabelColor
         toolbar.delegate = self
         toolbar.displayMode = .iconOnly
         toolbar.allowsUserCustomization = false
@@ -34,15 +41,14 @@ final class TranslationToolbar: NSObject, NSToolbarDelegate {
     }
 
     /// Every item reads "source → target", so the closed pop-up shows the whole direction.
+    /// The source language is always auto-detected, so it is a plain label; only the target is a menu.
+    /// Translating into the source language is meaningless, so that entry is disabled.
     private func updateLanguages(source: String?, target: String) {
-        let from = source.map(L) ?? L("Auto-detect")
-        popUp.removeAllItems()
-        for language in AppSettings.languages {
-            popUp.addItem(withTitle: "\(from) → \(L(language))")
-            popUp.lastItem?.representedObject = language
+        sourceLabel.stringValue = source.map(L) ?? L("Auto-detect")
+        for item in popUp.itemArray {
+            item.isEnabled = item.representedObject as? String != source
         }
         popUp.selectItem(at: AppSettings.languages.firstIndex(of: target) ?? 0)
-        popUp.sizeToFit()
     }
 
     private func updatePin(_ pinned: Bool) {
@@ -78,7 +84,13 @@ final class TranslationToolbar: NSObject, NSToolbarDelegate {
         switch id {
         case Self.languageID:
             item.label = L("Target language")
-            item.view = popUp
+            let arrow = NSImageView(image: NSImage(systemSymbolName: "arrow.right", accessibilityDescription: nil)!)
+            arrow.contentTintColor = .secondaryLabelColor
+            let stack = NSStackView(views: [sourceLabel, arrow, popUp])
+            stack.spacing = 6
+            // The toolbar draws one capsule around the whole item; inset the label so it doesn't touch the edge.
+            stack.edgeInsets = NSEdgeInsets(top: 0, left: 12, bottom: 0, right: 0)
+            item.view = stack
         case Self.pinID:
             item.target = self
             item.action = #selector(togglePin)
