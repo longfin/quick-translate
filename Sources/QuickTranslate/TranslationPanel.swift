@@ -35,6 +35,7 @@ final class TranslationPanelController {
     private let panel: TranslationPanel
     private let settings: AppSettings
     let viewModel: TranslationViewModel
+    private let toolbar: TranslationToolbar
     private var outsideClickMonitor: Any?
 
     private static let defaultSize = NSSize(width: 480, height: 340)
@@ -42,6 +43,7 @@ final class TranslationPanelController {
     init(settings: AppSettings) {
         self.settings = settings
         self.viewModel = TranslationViewModel(settings: settings)
+        self.toolbar = TranslationToolbar(vm: viewModel)
 
         panel = TranslationPanel(
             contentRect: NSRect(origin: .zero, size: Self.defaultSize),
@@ -60,7 +62,10 @@ final class TranslationPanelController {
         panel.minSize = NSSize(width: 380, height: 240)
         panel.setFrameAutosaveName("QuickTranslatePanel")
 
-        panel.contentView = NSHostingView(rootView: TranslationView(vm: viewModel, settings: settings))
+        let host = NSHostingView(rootView: TranslationView(vm: viewModel, settings: settings))
+        panel.toolbar = toolbar.toolbar
+        panel.toolbarStyle = .unified
+        panel.contentView = host
         panel.onClose = { [weak self] in self?.hide() }
     }
 

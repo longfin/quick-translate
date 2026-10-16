@@ -6,6 +6,8 @@
 "QuickTranslate Settings" = "QuickTranslate 설정";
 
 /* Panel */
+"Pin" = "고정";
+"Target language" = "번역할 언어";
 "Unpin" = "고정 해제";
 "Pin window (stays open when clicking outside)" = "창 고정 (바깥을 클릭해도 닫히지 않음)";
 "Auto-detect" = "자동 감지";
@@ -14,7 +16,6 @@
 "Translating…" = "번역 중…";
 "Retranslate" = "다시 번역";
 "Copy" = "복사";
-"Copied ✓" = "복사됨 ✓";
 "Nothing to translate. Select text and press ⌘C twice." = "번역할 텍스트가 없습니다. 텍스트를 선택한 뒤 ⌘C를 두 번 누르세요.";
 
 /* Engine errors */
