@@ -6,16 +6,16 @@
 "QuickTranslate Settings" = "QuickTranslate 設定";
 
 /* Panel */
+"Pin" = "固定";
+"Target language" = "翻訳先の言語";
 "Unpin" = "固定を解除";
 "Pin window (stays open when clicking outside)" = "ウインドウを固定（外側をクリックしても閉じない）";
-"Close (Esc)" = "閉じる (Esc)";
 "Auto-detect" = "自動検出";
 "Cancel" = "キャンセル";
 "Cancelled" = "キャンセルしました";
 "Translating…" = "翻訳中…";
 "Retranslate" = "再翻訳";
 "Copy" = "コピー";
-"Copied ✓" = "コピー済み ✓";
 "Nothing to translate. Select text and press ⌘C twice." = "翻訳するテキストがありません。テキストを選択して ⌘C を2回押してください。";
 
 /* Engine errors */

@@ -3,12 +3,9 @@ import SwiftUI
 struct TranslationView: View {
     @ObservedObject var vm: TranslationViewModel
     @ObservedObject var settings: AppSettings
-    var onClose: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
-            header
-            Divider()
             sourceArea
             Divider()
             resultArea
@@ -16,52 +13,6 @@ struct TranslationView: View {
             footer
         }
         .frame(minWidth: 380, minHeight: 240)
-    }
-
-    private var header: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "character.bubble")
-                .foregroundColor(.accentColor)
-            Text(verbatim: "QuickTranslate")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.secondary)
-            Spacer()
-            if let detected = vm.detectedLanguage {
-                Text(LocalizedStringKey(detected))
-                    .font(.system(size: 12))
-            } else {
-                Text("Auto-detect")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-            }
-            Image(systemName: "arrow.right")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(.secondary)
-            Picker("", selection: Binding(get: { vm.targetLanguage }, set: { vm.setTarget($0) })) {
-                ForEach(AppSettings.languages, id: \.self) { Text(LocalizedStringKey($0)).tag($0) }
-            }
-            .labelsHidden()
-            .controlSize(.small)
-            .frame(width: 150)
-
-            Button {
-                vm.pinned.toggle()
-            } label: {
-                Image(systemName: vm.pinned ? "pin.fill" : "pin")
-            }
-            .buttonStyle(.borderless)
-            .help(vm.pinned ? "Unpin" : "Pin window (stays open when clicking outside)")
-
-            Button(action: onClose) {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(.secondary)
-            }
-            .buttonStyle(.borderless)
-            .keyboardShortcut("w", modifiers: .command)
-            .help("Close (Esc)")
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
     }
 
     private var sourceArea: some View {
@@ -116,20 +67,25 @@ struct TranslationView: View {
                 ProgressView().controlSize(.small)
                 Button("Cancel") { vm.cancel() }
                     .keyboardShortcut(".", modifiers: .command)
-                    .controlSize(.small)
                     .help("⌘.")
             } else if vm.cancelled {
                 Text("Cancelled").font(.system(size: 11)).foregroundColor(.secondary)
             }
-            Button("Retranslate") { vm.retranslate() }
-                .keyboardShortcut(.return, modifiers: .command)
-                .controlSize(.small)
-                .help("⌘⏎")
-            Button(vm.copied ? "Copied ✓" : "Copy") { vm.copyTranslation() }
-                .keyboardShortcut("c", modifiers: [.command, .shift])
-                .controlSize(.small)
-                .disabled(vm.translatedText.isEmpty)
-                .help("⇧⌘C")
+            Button { vm.retranslate() } label: {
+                Label("Retranslate", systemImage: "arrow.clockwise")
+            }
+            .keyboardShortcut(.return, modifiers: .command)
+            .help("⌘⏎")
+            // The primary action. The title stays "Copy" so the button does not change width;
+            // only the icon flips to a checkmark for feedback.
+            Button { vm.copyTranslation() } label: {
+                Label("Copy", systemImage: vm.copied ? "checkmark" : "doc.on.doc")
+                    .modifier(SymbolReplaceTransition())
+            }
+            .keyboardShortcut("c", modifiers: [.command, .shift])
+            .modifier(ProminentButtonStyle())
+            .disabled(vm.translatedText.isEmpty)
+            .help("⇧⌘C")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -139,5 +95,26 @@ struct TranslationView: View {
         let model = settings.currentModel.trimmingCharacters(in: .whitespaces)
         let name = settings.backend == .claude ? "Claude" : "ChatGPT"
         return model.isEmpty ? name : "\(name) · \(model)"
+    }
+}
+
+/// Liquid Glass prominent style on macOS 26+, the filled accent style before that.
+private struct ProminentButtonStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(macOS 26, *) {
+            content.buttonStyle(.glassProminent)
+        } else {
+            content.buttonStyle(.borderedProminent)
+        }
+    }
+}
+
+private struct SymbolReplaceTransition: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(macOS 14, *) {
+            content.contentTransition(.symbolEffect(.replace))
+        } else {
+            content
+        }
     }
 }
