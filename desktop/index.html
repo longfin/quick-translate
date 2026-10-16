@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <title>QuickTranslate</title>
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+  <body>
+    <header data-tauri-drag-region>
+      <span class="title" data-tauri-drag-region>QuickTranslate</span>
+      <span id="status" class="status" data-tauri-drag-region></span>
+      <button id="close" tabindex="-1" title="Close (Esc)">✕</button>
+    </header>
+    <section id="source" class="source"></section>
+    <section id="output" class="output"></section>
+  </body>
+</html>
