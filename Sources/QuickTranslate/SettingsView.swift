@@ -1,5 +1,6 @@
 import SwiftUI
 import ApplicationServices
+import ServiceManagement
 
 struct SettingsView: View {
     @ObservedObject var settings: AppSettings
@@ -92,6 +93,7 @@ struct SettingsView: View {
                         .font(.caption).foregroundColor(.secondary)
                 }
                 Toggle("Close when clicking outside", isOn: $settings.closeOnOutsideClick)
+                LaunchAtLoginRow()
             }
 
             Section("Permissions") {
@@ -157,6 +159,40 @@ struct SettingsView: View {
 func openAccessibilitySettings() {
     if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
         NSWorkspace.shared.open(url)
+    }
+}
+
+/// "Open at login" toggle. The state lives in the system's login items (SMAppService),
+/// not in UserDefaults, so it stays correct if the user changes it in System Settings.
+struct LaunchAtLoginRow: View {
+    @State private var status = SMAppService.mainApp.status
+    @State private var error: String?
+
+    var body: some View {
+        Toggle("Open at login", isOn: Binding(
+            get: { status == .enabled || status == .requiresApproval },
+            set: { setEnabled($0) }))
+        if status == .requiresApproval {
+            HStack {
+                Text("Allow QuickTranslate in System Settings → Login Items.")
+                    .font(.caption).foregroundColor(.secondary)
+                Spacer()
+                Button("Open System Settings") { SMAppService.openSystemSettingsLoginItems() }
+            }
+        }
+        if let error {
+            Text(verbatim: error).font(.caption).foregroundColor(.red)
+        }
+    }
+
+    private func setEnabled(_ on: Bool) {
+        do {
+            if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
+            error = nil
+        } catch {
+            self.error = error.localizedDescription
+        }
+        status = SMAppService.mainApp.status
     }
 }
 

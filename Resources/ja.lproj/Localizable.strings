@@ -64,6 +64,8 @@
 "Double ⌘C interval" = "⌘C 2回押しの間隔";
 "%.2fs" = "%.2f秒";
 "Close when clicking outside" = "外側をクリックしたら閉じる";
+"Open at login" = "ログイン時に開く";
+"Allow QuickTranslate in System Settings → Login Items." = "システム設定 → ログイン項目で QuickTranslate を許可してください。";
 "Permissions" = "権限";
 "Accessibility permission granted." = "アクセシビリティ権限が許可されています。";
 "Accessibility permission is required for the global hotkey." = "グローバルショートカットにはアクセシビリティ権限が必要です。";
