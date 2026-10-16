@@ -1,5 +1,5 @@
 #!/bin/bash
-# Regenerates Resources/AppIcon.icns, the menu bar icon and docs/logo.png from Resources/Icon/generate.swift
+# Regenerates Resources/AppIcon.icns, the menu bar icon and ../docs/logo.png from Resources/Icon/generate.swift
 set -euo pipefail
 cd "$(dirname "$0")"
 OUT="$(mktemp -d)"
@@ -11,7 +11,7 @@ for s in 16 32 128 256 512; do
 done
 iconutil -c icns "$ICONSET" -o Resources/AppIcon.icns
 cp "$OUT/MenuBarIcon.png" "$OUT/MenuBarIcon@2x.png" Resources/
-cp "$OUT/logo-256.png" docs/logo.png
-cp "$OUT/AppIcon-1024.png" docs/icon-1024.png
+cp "$OUT/logo-256.png" ../docs/logo.png
+cp "$OUT/AppIcon-1024.png" ../docs/icon-1024.png
 rm -rf "$OUT"
-echo "✓ Resources/AppIcon.icns, Resources/MenuBarIcon{,@2x}.png, docs/logo.png"
+echo "✓ Resources/AppIcon.icns, Resources/MenuBarIcon{,@2x}.png, ../docs/logo.png"

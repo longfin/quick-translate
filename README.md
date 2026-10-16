@@ -24,8 +24,9 @@ reporting, no API keys. Usage counts against your subscription like any other CL
 ## Build & install
 
 ```bash
+cd macos
 ./make-cert.sh        # optional, once: self-signed identity so rebuilds keep the Accessibility permission
-./build.sh            # builds build/QuickTranslate.app
+./build.sh            # builds macos/build/QuickTranslate.app
 ./build.sh --install  # copies to /Applications and launches it
 ```
 
@@ -99,7 +100,7 @@ Logs go to `~/Library/Logs/QuickTranslate.log`.
 
 The UI is English by default and switches to Korean or Japanese automatically based on the system
 language. On first launch the default translation languages follow the system language too. To add a
-language, create `Resources/<lang>.lproj/Localizable.strings` (keys are the English strings).
+language, create `macos/Resources/<lang>.lproj/Localizable.strings` (keys are the English strings).
 
 ## How it works
 
@@ -118,8 +119,10 @@ language, create `Resources/<lang>.lproj/Localizable.strings` (keys are the Engl
 
 ## Project layout
 
+`macos/` is the macOS app. A `desktop/` Tauri app for Windows and Linux is planned ([#3](https://github.com/longfin/quick-translate/issues/3)).
+
 ```
-Sources/QuickTranslate/
+macos/Sources/QuickTranslate/
   main.swift                 entry point (menu bar only, no Dock icon)
   AppDelegate.swift          status item menu, permission flow, clipboard trigger, auto-relaunch
   Hotkey.swift               shortcut model, key labels, synthetic ⌘C
@@ -137,7 +140,7 @@ Sources/QuickTranslate/
   Settings.swift             UserDefaults-backed settings
   SettingsView.swift         settings window
   L10n.swift                 localization helper
-Resources/
+macos/Resources/
   Info.plist, AppIcon.icns, MenuBarIcon{,@2x}.png, en/ko/ja.lproj/Localizable.strings
   Icon/generate.swift        draws the icons; regenerate with ./build-icons.sh
 ```

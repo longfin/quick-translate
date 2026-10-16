@@ -6,6 +6,7 @@ project file, so everything works from the command line.
 ## Development loop
 
 ```bash
+cd macos
 ./make-cert.sh          # once: stable signing identity so the Accessibility grant survives rebuilds
 ./build.sh --install    # build, install to /Applications, relaunch
 tail -f ~/Library/Logs/QuickTranslate.log
@@ -29,22 +30,22 @@ See "Project layout" in the README. Rough rules:
 
 ## Adding a UI language
 
-1. Create `Resources/<code>.lproj/Localizable.strings` (copy `ko.lproj` as a starting point).
+1. Create `macos/Resources/<code>.lproj/Localizable.strings` (copy `ko.lproj` as a starting point).
    Keys are the English strings; anything missing falls back to English.
-2. Add the language to `AppSettings.uiLanguages` in `Sources/QuickTranslate/Settings.swift`.
-3. Run `plutil -lint Resources/*/Localizable.strings`.
+2. Add the language to `AppSettings.uiLanguages` in `macos/Sources/QuickTranslate/Settings.swift`.
+3. Run `plutil -lint macos/Resources/*/Localizable.strings`.
 
 ## Adding a translation language
 
-Add the English name to `AppSettings.languages`, its localized names to each `.strings` file, the
-`NLLanguage` mapping in `LanguageDetector.swift`, and the locale code mapping in
+Add the English name to `AppSettings.languages`, its localized names to each `.strings` file under
+`macos/Resources/`, the `NLLanguage` mapping in `LanguageDetector.swift`, and the locale code mapping in
 `AppSettings.systemDefaultLanguages()`.
 
 ## Pull requests
 
 - Keep PRs focused; one change per PR.
 - Describe how you tested it (which CLI, which macOS version) and paste relevant log lines.
-- Run `swift build -c release` before pushing; there is no CI yet.
+- Run `swift build -c release` in `macos/` before pushing; there is no CI yet.
 
 ## Reporting bugs
 
