@@ -22,7 +22,8 @@ DeepL 데스크톱 클라이언트처럼 **⌘C 를 두 번** 누르면 선택�
 ## 빌드 / 설치
 
 ```bash
-./build.sh            # build/QuickTranslate.app 생성
+cd macos
+./build.sh            # macos/build/QuickTranslate.app 생성
 ./build.sh --install  # /Applications 에 복사 후 실행
 ```
 
@@ -94,7 +95,7 @@ osascript -l JavaScript -e 'ObjC.import("Foundation"); $.NSDistributedNotificati
 
 앱 UI는 영어가 기본이며, 시스템 언어가 한국어·일본어면 자동으로 그 언어로 표시됩니다.
 첫 실행 시 번역 기본 언어도 시스템 언어(그리고 두 번째 선호 언어)를 따릅니다. 다른 언어를 추가하려면
-`Resources/<lang>.lproj/Localizable.strings` 를 만들면 됩니다.
+`macos/Resources/<lang>.lproj/Localizable.strings` 를 만들면 됩니다.
 
 ## 동작 방식
 
@@ -111,8 +112,10 @@ osascript -l JavaScript -e 'ObjC.import("Foundation"); $.NSDistributedNotificati
 
 ## 프로젝트 구조
 
+`macos/` 는 macOS 앱입니다. Windows·Linux용 `desktop/` Tauri 앱은 계획 중입니다([#3](https://github.com/longfin/quick-translate/issues/3)).
+
 ```
-Sources/QuickTranslate/
+macos/Sources/QuickTranslate/
   main.swift                 앱 진입점 (메뉴바 전용, Dock 아이콘 없음)
   AppDelegate.swift          상태 표시줄 메뉴, 권한 처리, 클립보드 번역 트리거
   Hotkey.swift               단축키 모델, 키 이름, ⌘C 자동 전송
