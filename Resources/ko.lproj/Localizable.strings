@@ -64,6 +64,8 @@
 "Double ⌘C interval" = "⌘C 두 번 인식 간격";
 "%.2fs" = "%.2f초";
 "Close when clicking outside" = "창 바깥을 클릭하면 닫기";
+"Open at login" = "로그인 시 열기";
+"Allow QuickTranslate in System Settings → Login Items." = "시스템 설정 → 로그인 항목에서 QuickTranslate를 허용하세요.";
 "Permissions" = "권한";
 "Accessibility permission granted." = "손쉬운 사용(Accessibility) 권한이 허용되었습니다.";
 "Accessibility permission is required for the global hotkey." = "전역 단축키를 쓰려면 손쉬운 사용 권한이 필요합니다.";
