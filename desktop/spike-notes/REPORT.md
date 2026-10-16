@@ -19,27 +19,59 @@
 
 ## Numbers
 
-| Metric | Tauri spike | Swift app (reference) |
-| --- | --- | --- |
-| `pnpm tauri build` | ✅ succeeds, no warnings. Clean release build ≈ 1 m 30 s; after a 1-line change ≈ 54 s (LTO + `codegen-units=1`) | — |
-| Incremental `cargo build` (debug) after a 1-line change | 4–5 s | — |
-| `.app` bundle size | **4.3 MB** (the binary is 4.4 MB stripped; frontend assets ≈ 4 KB) | — |
-| Rust crates (macOS, `cargo tree -e normal`, unique) | 226 (`Cargo.lock` lists 418 because it covers Windows and Linux too); `cargo tree` prints 678 lines | 0 third-party |
-| npm packages | 4 direct (`@tauri-apps/api`, `@tauri-apps/cli`, `vite`, `typescript`), 20 installed in total, all dev-time except `@tauri-apps/api` | — |
-| Disk used while building | `src-tauri/target` 4.3 GB, `node_modules` 69 MB | — |
-| Cold start: `open` → tray icon ready | 174 / 222 / 199 ms when warm (first launch after a build: 753 ms, probably the first code-signature and LaunchServices registration). In-process: `main()` → `TRAY_READY` ≈ 130–170 ms, mostly creating the hidden webview (≈ 150 ms). | not measured (I did not relaunch your installed app) |
-| Idle memory, app only (panel created and hidden) | RSS 96–100 MB; **phys_footprint 28 MB** | RSS 65 MB; **phys_footprint 42 MB** |
-| Idle memory, WebKit helper processes (only the webview path pays this) | WebContent 35–39 MB RSS / 19 MB footprint, GPU 25–27 MB / 13 MB, Networking 10–15 MB / 7 MB | none (SwiftUI runs in process) |
-| **Idle memory, total** | **≈ 165 MB RSS / ≈ 67 MB footprint across 4 processes** | **≈ 65 MB RSS / 42 MB footprint, 1 process** |
-| Warm Claude worker (the CLI's own cost, the same for both apps) | 238–258 MB RSS / 133 MB footprint just after spawning | 174 MB RSS / 121 MB footprint after hours of uptime |
-| Trigger → `orderFront` returned | 1–11 ms (median ≈ 3 ms) | — |
-| Trigger → panel painted (JS `requestAnimationFrame` after the `tr-start` event) | 2–65 ms, **median ≈ 21 ms** (n = 10) | — |
-| Trigger → first streamed token | **median ≈ 1.00 s** (0.83–1.16 s, n = 8) | — |
-| Trigger → finished (2-sentence paragraph, ≈ 150 chars) | **median ≈ 1.63 s** (1.31–1.74 s, n = 9) | the claimed ~0.7 s was not reproducible today; see below |
-| Same CLI with no Tauri involved (`scripts/baseline.py`, same 5 texts, same args) | first token median 1.00 s, finished median 1.64 s | — |
-| Rust event → token painted in the webview (IPC + DOM + next frame) | **1.2–14 ms, typically ≈ 1.3 ms** | — |
+### Build and size (Tauri only)
 
-**Reading the latency rows:** in this setup Tauri adds essentially nothing. The time is all CLI and API: the bare CLI harness gives the same 1.0 s / 1.64 s medians as the Tauri app. The Swift app's ~0.7 s figure was not reproducible today even with the bare CLI. Your Swift app's own log from earlier today shows 2.0–3.8 s for 325–1184-character inputs, which is consistent with what I saw. `/clear` returns its own `result` line ≈ 9 ms after it is sent. Both workers ignore that line, because they only accept a `result` while a turn is busy.
+| Metric | Tauri spike |
+| --- | --- |
+| `pnpm tauri build` | ✅ succeeds, no warnings. Clean release build ≈ 1 m 30 s; after a 1-line change ≈ 54 s (LTO + `codegen-units=1`) |
+| Incremental `cargo build` (debug) after a 1-line change | 4–5 s |
+| `.app` bundle size | **4.3 MB** (the binary is 4.4 MB stripped; frontend assets ≈ 4 KB) |
+| Rust crates (macOS, `cargo tree -e normal`, unique) | 226 (`Cargo.lock` lists 418 because it covers Windows and Linux too). The Swift app has 0 third-party dependencies. |
+| npm packages | 4 direct (`@tauri-apps/api`, `@tauri-apps/cli`, `vite`, `typescript`), 20 installed in total, all dev-time except `@tauri-apps/api` |
+| Disk used while building | `src-tauri/target` 4.3 GB, `node_modules` 69 MB |
+
+### Side by side: installed Swift app vs. Tauri spike
+
+Both apps were measured in the same session, 2026-10-17 ~03:15, with [`scripts/compare.py`](scripts/compare.py). Only one app was running at a time. The 5 cold launches alternated Swift, Tauri, Swift, Tauri… Both use the same `claude` CLI, model `haiku` (the Swift app's `claudeModel`; `keepClaudeWarm` is at its default, on), and the same 5 texts as `scripts/baseline.py`. Values are **median (range)**.
+
+| Metric | Swift (installed `/Applications/QuickTranslate.app`) | Tauri spike | n per app |
+| --- | --- | --- | --- |
+| Cold start: `open` → status item created and ⌘C ⌘C armed | **110 ms** (97–119) | **188 ms** (160–197) | 5 |
+| Idle memory, app process (panel hidden, worker warm, measured 10 s after launch) | RSS **58 MB** (57.8–58.0), footprint **14 MB** | RSS **97 MB** (97.0–97.6), footprint **25 MB** (25–26) | 5 |
+| Idle memory, WebKit helpers (WebContent + GPU + Networking) | none | RSS **79 MB**, footprint **36 MB** (3 processes; same every run) | 5 |
+| **Idle memory, total** | **58 MB RSS / 14 MB footprint, 1 process** | **176 MB RSS / 61 MB footprint, 4 processes** | 5 |
+| Warm `claude` worker (CLI's own cost) | RSS 238 MB (233–238), footprint 110 MB (108–111) | RSS 238 MB (237–240), footprint 111 MB (110–112) | 5 |
+| ⌘C ⌘C → trigger detected in app (pasteboard polling) | 48 ms (7–57) | 28 ms (0–49) | 10 |
+| ⌘C ⌘C → panel on screen, **first show after launch** | **210 ms** (196–215) | **54 ms** (25–96) | 5 |
+| ⌘C ⌘C → panel on screen, later shows (panel had been hidden by an outside click) | 47 / 73 ms | 48 ms | 2 / 1 ⚠️ |
+| ⌘C ⌘C → first streamed token | **not measurable**: the Swift log has no first-token marker | 1143 ms (798–1199) for a fresh worker; 1055 ms (762–1934) warm | 5 + 5 |
+| ⌘C ⌘C → finished, fresh worker (first turn after launch) | 1814 ms (1400–1852) | 1581 ms (1221–2128) | 5 |
+| ⌘C ⌘C → finished, warm worker (after one warm-up turn) | 1453 ms (1177–2230) | 1620 ms (1085–2378) | 5 |
+| ⌘C ⌘C → finished, all runs | **1622 ms** (1177–2230) | **1600 ms** (1085–2378) | 10 |
+
+The same CLI driven with no app at all (`scripts/baseline.py`, earlier the same night) gave first token 1.00 s and finished 1.64 s. Tauri's own overhead from a Rust event to the token painted in the webview is ≈ 1.3 ms (1.2–14 ms).
+
+**How to read it:**
+- **Translation latency is a tie.** The spread between runs (±0.5 s) comes from the API and is far larger than any app difference.
+- **Tauri shows its panel faster on the first trigger after launch.** Its webview is created and loaded at startup. The Swift app takes ≈ 200 ms the first time, likely the SwiftUI hosting view's first layout and render; after that it shows in ≈ 50–70 ms.
+- **The Swift app launches ≈ 80 ms faster**, because Tauri creates the hidden webview up front.
+- **Memory is the real gap.** The Tauri spike uses ≈ 4.4× the footprint (61 vs 14 MB) and ≈ 3× the RSS (176 vs 58 MB), spread across 4 processes. The `claude` worker (≈ 110 MB footprint) costs the same in both and dominates either app.
+
+**Methodology differences and caveats:**
+- **Trigger.** Both apps are triggered by two real `pbcopy` writes 120 ms apart, which is the user-facing ⌘C ⌘C path in both. The clock starts (t0) when the second `pbcopy` returns. The Swift app polls the pasteboard every 60 ms (±20 ms leeway); the spike polls every 50 ms.
+- **Panel on screen.** Measured outside both apps by `scripts/waitwin.swift`, which polls `CGWindowListCopyWindowInfo` every ~1 ms for a floating window of that app. It is identical for both and needs no permissions.
+- **Not enough later-show samples (⚠️).** Neither app can be told to hide its panel without Accessibility permission (Esc or an outside click), and no Accessibility permission was added. So "later show" samples exist only when you happened to click elsewhere between runs, and that row has n = 2 / 1.
+- **Cold start uses different markers.**
+  - Swift: from `open` to the `pasteboard watcher started` log line. It is written right after `setupStatusItem()` in `applicationDidFinishLaunching`.
+  - Tauri: from `open` to `TRAY_READY`; its pasteboard watcher starts < 1 ms later.
+  - On macOS 27 the status item doesn't appear in `CGWindowList`, so the window server could not be used for this.
+  - The Swift app was launched with `open <path>` and the spike with `open -n <path>`.
+- **Finished.** Swift: its `translate finished` log line, written on the main queue when the result arrives. Tauri: `RESULT_DONE`, written in the worker task when the result line arrives (the webview paints ≈ 1–15 ms later).
+- **First token.** The Swift app logs no first-token marker. I did not instrument the installed app or try to infer the first token from screenshots. The bare-CLI baseline and the identical CLI arguments are the best stand-in.
+- **The prompts differ slightly.** The Swift app detects the source language and sends "Translate from English into Korean:". The spike always sends "Translate into Korean, or into English if the text is already mostly Korean:". The system prompt and CLI arguments are identical.
+- **The panels differ.** The Swift panel is 772×450 (your saved frame) with native titlebar and toolbar. The spike's panel is 480×340 and undecorated.
+- **Memory depends on uptime.** These are fresh-launch numbers. Your long-running Swift instance measured earlier showed a 42 MB footprint, so footprint grows with uptime. The spike was not run for hours, so its long-run growth is unknown.
+- **Your Swift app was restarted.** The harness stopped it with SIGTERM; its worker exited on stdin EOF, as the spike's does. I relaunched it at the end (pid 13594, warm worker 13597).
 
 ## Focus behavior
 
@@ -76,10 +108,10 @@ So **`tauri-nspanel` is required** to match the Swift UX, and it works.
 
 ## Not done / not measured
 
-- Swift app cold start (I did not want to relaunch your installed app). Pin button, settings, language detection, codex backend, Carbon single-press hotkey, launch at login (`tauri-plugin-autostart` exists), localization.
+- Pin button, settings, language detection, codex backend, Carbon single-press hotkey, launch at login (`tauri-plugin-autostart` exists), localization.
 - Esc was not driven by automation, because that needs Accessibility permission for the terminal. It is wired the standard way (JS `keydown`, panel is key) (evidence that it is key: it receives `Focused(false)` when you click elsewhere). The close button was not clicked in testing either.
 - Light mode, multi-monitor positioning on a non-primary display, and full-screen Spaces were not tested explicitly.
 
 ## Reproduce
 
-`pnpm tauri build`, then use the scripts in `spike-notes/scripts/`: `coldstart.sh`, `trigger.sh N` (launch the app with `open --env QT_TRIGGER=single …` first), `baseline.py` (bare CLI), and `winid.swift` (window id for `screencapture -l`). The log is written to `~/Library/Logs/QuickTranslateSpike.log`, with trigger-relative timestamps on every line.
+`pnpm tauri build`, then use the scripts in `spike-notes/scripts/`: `compare.py <waitwin-binary>` (side by side with the installed Swift app; it restarts that app), `coldstart.sh`, `trigger.sh N` (launch the app with `open --env QT_TRIGGER=single …` first), `baseline.py` (bare CLI), and `winid.swift` (window id for `screencapture -l`). The log is written to `~/Library/Logs/QuickTranslateSpike.log`, with trigger-relative timestamps on every line.
