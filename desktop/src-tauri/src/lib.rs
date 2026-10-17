@@ -20,6 +20,7 @@ pub fn run() {
             // Phase 2 routes `--translate` here as a scripting trigger.
             log::write(format!("second instance launched, args={:?}", args.get(1..).unwrap_or(&[])));
         }))
+        .invoke_handler(engine::commands::handler())
         .setup(|app| {
             // Runs only in the primary instance; a second one exits inside the plugin above.
             log::write(format!(
@@ -33,6 +34,7 @@ pub fn run() {
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
             tray::create(app.handle())?;
+            engine::commands::init(app.handle());
             Ok(())
         })
         .build(tauri::generate_context!())
@@ -42,7 +44,10 @@ pub fn run() {
         // Closing the last window must not quit a tray app; only the tray's Quit (`exit(0)`,
         // which sets a code) ends it.
         RunEvent::ExitRequested { api, code: None, .. } => api.prevent_exit(),
-        RunEvent::Exit => log::write("exit"),
+        RunEvent::Exit => {
+            engine::commands::shutdown();
+            log::write("exit");
+        }
         _ => {}
     });
 }
