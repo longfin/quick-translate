@@ -1,0 +1,28 @@
+[package]
+name = "quicktranslate"
+version = "0.1.0"
+description = "Select text, press Ctrl+C twice, get a translation (Windows / Linux)"
+authors = ["QuickTranslate contributors"]
+license = "MIT"
+repository = "https://github.com/longfin/quick-translate"
+edition = "2021"
+
+[lib]
+# A distinct lib name avoids a bin/lib name clash on Windows (rust-lang/cargo#8519).
+name = "quicktranslate_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-single-instance = "2"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
