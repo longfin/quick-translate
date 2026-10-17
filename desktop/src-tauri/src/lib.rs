@@ -4,6 +4,7 @@
 
 mod engine;
 mod log;
+mod panel;
 mod trigger;
 mod tray;
 
@@ -12,14 +13,31 @@ use tauri::RunEvent;
 /// Label of the pre-created, hidden translation window.
 pub const PANEL: &str = "panel";
 
-/// Every trigger (double copy, hotkey, tray, `--translate`) ends here.
-/// Stub until the panel (Phase 3) wires it to `engine::commands::translate`: logs, shows nothing.
-pub fn on_trigger<R: tauri::Runtime>(_app: &tauri::AppHandle<R>, trigger: trigger::Trigger) {
+/// Every trigger (double copy, hotkey, tray, `--translate`) ends here: shows the panel near the
+/// cursor and translates the text (or says there is nothing to translate).
+pub fn on_trigger<R: tauri::Runtime>(app: &tauri::AppHandle<R>, trigger: trigger::Trigger) {
     log::write(format!(
         "TRIGGER source={:?} chars={}",
         trigger.source,
         trigger.text.chars().count()
     ));
+    panel::show_for(app, trigger);
+}
+
+/// Every Tauri command the webviews may invoke, in one list.
+fn handler<R: tauri::Runtime>() -> impl Fn(tauri::ipc::Invoke<R>) -> bool + Send + Sync + 'static {
+    tauri::generate_handler![
+        engine::commands::translate,
+        engine::commands::cancel,
+        engine::commands::prewarm,
+        engine::commands::test_cli,
+        panel::panel_init,
+        panel::panel_retranslate,
+        panel::panel_hide,
+        panel::panel_set_pinned,
+        panel::panel_copy,
+        panel::panel_mark,
+    ]
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -33,7 +51,7 @@ pub fn run() {
                 trigger::fire(app, trigger::Source::SecondInstance);
             }
         }))
-        .invoke_handler(engine::commands::handler())
+        .invoke_handler(handler())
         .setup(|app| {
             // Runs only in the primary instance; a second one exits inside the plugin above.
             log::write(format!(

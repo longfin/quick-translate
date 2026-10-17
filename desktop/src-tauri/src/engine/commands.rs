@@ -100,29 +100,41 @@ pub fn shutdown() {
     });
 }
 
-pub fn handler<R: Runtime>() -> impl Fn(tauri::ipc::Invoke<R>) -> bool + Send + Sync + 'static {
-    tauri::generate_handler![translate, cancel, prewarm, test_cli]
-}
-
 /// Starts a translation and returns its id. Events arrive as `translate://*`.
 #[tauri::command]
-async fn translate<R: Runtime>(
+pub async fn translate<R: Runtime>(
     app: AppHandle<R>,
     text: String,
     source: Option<String>,
     target: String,
     fallback: String,
 ) -> Result<u64, String> {
+    let id = start(&app, &text, source.as_deref(), &target, &fallback, |_| {});
+    Ok(id)
+}
+
+/// The body of the `translate` command, for Rust callers (the panel). `on_id` runs with the new
+/// id after the previous translation is cancelled and before the engine can emit anything, so a
+/// caller can announce the id first. Must run inside the async runtime.
+pub fn start<R: Runtime>(
+    app: &AppHandle<R>,
+    text: &str,
+    source: Option<&str>,
+    target: &str,
+    fallback: &str,
+    on_id: impl FnOnce(u64),
+) -> u64 {
     let state = app.state::<EngineState>();
     state.cancel_current();
     let id = state.next_id.fetch_add(1, Ordering::SeqCst) + 1;
     state.current_id.store(id, Ordering::SeqCst);
+    on_id(id);
 
-    let settings = load_settings(&app);
+    let settings = load_settings(app);
     log::write(format!(
         "translate start id={id} backend={:?} source={} target={target} chars={}",
         settings.backend,
-        source.as_deref().unwrap_or("?"),
+        source.unwrap_or("?"),
         text.chars().count()
     ));
 
@@ -152,14 +164,7 @@ async fn translate<R: Runtime>(
         };
     });
 
-    let job = translation_engine::translate(
-        &text,
-        source.as_deref(),
-        &target,
-        &fallback,
-        &settings,
-        sink,
-    );
+    let job = translation_engine::translate(text, source, target, fallback, &settings, sink);
     if let Some(job) = job {
         let mut slot = state.job.lock().unwrap_or_else(|e| e.into_inner());
         if state.current_id.load(Ordering::SeqCst) == id {
@@ -169,7 +174,17 @@ async fn translate<R: Runtime>(
             job.cancel(); // superseded (or already done) while starting
         }
     }
-    Ok(id)
+    id
+}
+
+/// Whether a translation is still running (neither finished, failed nor cancelled).
+pub fn is_running<R: Runtime>(app: &AppHandle<R>) -> bool {
+    app.state::<EngineState>().current_id.load(Ordering::SeqCst) != 0
+}
+
+/// Cancels the running translation, if any (the `cancel` command without the log line).
+pub fn cancel_current<R: Runtime>(app: &AppHandle<R>) {
+    app.state::<EngineState>().cancel_current();
 }
 
 fn finish(state: &EngineState, id: u64) {
@@ -184,7 +199,7 @@ fn finish(state: &EngineState, id: u64) {
 
 /// Stops the running translation; the panel keeps whatever was streamed.
 #[tauri::command]
-async fn cancel<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
+pub async fn cancel<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
     app.state::<EngineState>().cancel_current();
     log::write("translate cancelled");
     Ok(())
@@ -192,14 +207,14 @@ async fn cancel<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
 
 /// Re-reads the settings and (re)starts or stops the warm Claude process accordingly.
 #[tauri::command]
-async fn prewarm<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
+pub async fn prewarm<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
     translation_engine::prewarm(&load_settings(&app));
     Ok(())
 }
 
 /// Locates the CLI (`path` overrides the settings) and runs `--version`.
 #[tauri::command]
-async fn test_cli<R: Runtime>(
+pub async fn test_cli<R: Runtime>(
     app: AppHandle<R>,
     path: Option<String>,
     backend: Option<Backend>,

@@ -1,17 +1,175 @@
 :root {
   color-scheme: light dark;
-  font-family: system-ui, "Segoe UI", Ubuntu, Cantarell, sans-serif;
+  --bg: #fbfbfb;
+  --bg-bar: #f0f0f0;
+  --fg: rgba(0, 0, 0, 0.88);
+  --fg-dim: rgba(0, 0, 0, 0.5);
+  --rule: rgba(0, 0, 0, 0.12);
+  --hover: rgba(0, 0, 0, 0.07);
+  --accent: #2f6fde;
+  --err: #c0392b;
+  font-family: system-ui, "Segoe UI", Ubuntu, Cantarell, "Noto Sans", "Apple SD Gothic Neo",
+    "Malgun Gothic", sans-serif;
   font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Dark: the system setting, unless the window theme says light (and vice versa). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #242424;
+    --bg-bar: #2d2d2d;
+    --fg: rgba(255, 255, 255, 0.9);
+    --fg-dim: rgba(255, 255, 255, 0.5);
+    --rule: rgba(255, 255, 255, 0.14);
+    --hover: rgba(255, 255, 255, 0.09);
+    --accent: #4c8dff;
+    --err: #ff6b5b;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #242424;
+  --bg-bar: #2d2d2d;
+  --fg: rgba(255, 255, 255, 0.9);
+  --fg-dim: rgba(255, 255, 255, 0.5);
+  --rule: rgba(255, 255, 255, 0.14);
+  --hover: rgba(255, 255, 255, 0.09);
+  --accent: #4c8dff;
+  --err: #ff6b5b;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--fg);
+  /* Undecorated window: draw its edge (Linux WMs add no border or shadow). */
+  box-shadow: inset 0 0 0 1px var(--rule);
 }
 
-#panel {
-  padding: 12px 14px;
+header,
+footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--bg-bar);
+  user-select: none;
+  cursor: default;
 }
 
-.placeholder {
-  opacity: 0.6;
+header {
+  border-bottom: 1px solid var(--rule);
+}
+
+footer {
+  border-top: 1px solid var(--rule);
+  font-size: 12px;
+}
+
+.spacer {
+  flex: 1;
+  align-self: stretch;
+}
+
+.dim {
+  color: var(--fg-dim);
+}
+
+select,
+button {
+  font: inherit;
+  font-size: 12px;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: 2px 8px;
+}
+
+select {
+  max-width: 11em;
+  background: var(--bg);
+}
+
+button:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+button:disabled,
+select:disabled {
+  opacity: 0.45;
+}
+
+button.icon {
+  border-color: transparent;
+  padding: 2px 6px;
+  line-height: 1;
+}
+
+button.icon svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  vertical-align: middle;
+}
+
+#pin[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+#pin[aria-pressed="true"] svg {
+  fill: currentColor;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.1);
+}
+
+.source,
+.output {
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  outline: none;
+  user-select: text;
+}
+
+.source {
+  height: 84px;
+  flex: none;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--fg-dim);
+  border-bottom: 1px solid var(--rule);
+}
+
+.output {
+  flex: 1;
+  padding: 10px 12px;
+}
+
+.output.dim {
+  color: var(--fg-dim);
+}
+
+.output.error {
+  color: var(--err);
+  font-size: 12px;
 }
