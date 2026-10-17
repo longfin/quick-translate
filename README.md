@@ -8,6 +8,9 @@ A tiny macOS menu bar app: press **⌘C twice** and a translation of the selecte
 your cursor, like the DeepL desktop client. No API keys. It uses the **Claude Code CLI** (your Claude
 subscription) or the **Codex CLI** (your ChatGPT subscription) that you already have installed and logged in.
 
+On **Windows and Linux** the same idea is a tray app: select text, press **Ctrl+C twice**. See
+[Windows & Linux](#windows--linux).
+
 ## Privacy
 
 The app sends the text you translate to the CLI you chose, which sends it to Anthropic (Claude) or
@@ -96,6 +99,105 @@ osascript -l JavaScript -e 'ObjC.import("Foundation"); $.NSDistributedNotificati
 
 Logs go to `~/Library/Logs/QuickTranslate.log`.
 
+## Windows & Linux
+
+A separate Tauri app in [`desktop/`](desktop) with the same panel, engines, languages and settings
+as the macOS app. It lives in the system tray (notification area) and has no window until you
+use it. Downloads are on the [releases page](https://github.com/longfin/quick-translate/releases)
+(tags `desktop-v*`).
+
+### Requirements
+
+- **Windows** 10 (1803 or later) or 11, x64 or ARM64. The app draws its UI with the Microsoft
+  Edge **WebView2** runtime: preinstalled on Windows 11 and on up-to-date Windows 10; the installer
+  downloads it if it is missing (the portable zip doesn't, get it from
+  [Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/)).
+- **Linux** x86_64 or aarch64 with glibc 2.35 or newer (Ubuntu 22.04, Debian 12, Fedora 36 and
+  later), on X11 or Wayland. The tray icon needs `libayatana-appindicator3-1` (the `.deb` pulls it
+  in). **GNOME** has no tray of its own: it needs the AppIndicator extension, which Ubuntu ships
+  enabled; elsewhere install `gnome-shell-extension-appindicator` and turn it on in Extensions.
+  KDE Plasma, Xfce, Cinnamon and MATE work as they are.
+- The `claude` or `codex` CLI, installed and logged in, as on macOS. Installed through npm they
+  also need **Node.js** (18 or later), found next to the CLI or on the `PATH`.
+
+### Install
+
+**Windows**
+
+- **Installer** (`QuickTranslate-<version>-windows-x64-setup.exe`, or `-arm64-` for ARM PCs):
+  installs for the current user, no administrator rights, and adds a Start menu entry.
+- **Portable** (`…-windows-x64-portable.zip` / `-arm64-`): unzip anywhere and run
+  `quicktranslate.exe`. Settings and the log still go to your user profile.
+
+The builds are not code-signed, so SmartScreen says "Windows protected your PC" the first time:
+click **More info → Run anyway**.
+
+**Linux**
+
+- **AppImage** (`QuickTranslate-<version>-linux-x86_64.AppImage` or `-aarch64`), any distro:
+  ```bash
+  chmod +x QuickTranslate-*.AppImage
+  ./QuickTranslate-*.AppImage
+  ```
+  AppImages need FUSE 2 (`sudo apt install libfuse2`, `libfuse2t64` on Ubuntu 24.04). Without it,
+  run it with `--appimage-extract-and-run`.
+- **Debian / Ubuntu** (`QuickTranslate_<version>_amd64.deb` or `_arm64.deb`):
+  ```bash
+  sudo apt install ./QuickTranslate_*_amd64.deb   # then start "QuickTranslate" from the app menu
+  ```
+
+`SHA256SUMS` next to the downloads lists the checksums. To start it with your session, tick
+**Run at startup** in Settings.
+
+### Usage
+
+Select text and press **Ctrl+C Ctrl+C** (twice within 0.4 s): the translation panel opens next to
+the cursor. The tray icon's menu has **Translate clipboard**, **Settings…** and **Quit**. In the
+panel, **Esc** or **Ctrl+W** closes it (so does clicking outside, unless a translation is still
+running), **Ctrl+Enter** retranslates the edited source, and the pin keeps it open and on top.
+Settings are the macOS app's, plus **Run at startup**.
+
+**How the trigger works.** Like ⌘C ⌘C on the Mac, Ctrl+C Ctrl+C is detected from the clipboard,
+not the keyboard: two copies within the interval mean "translate". No keyboard hook and no
+permissions. The app is notified of clipboard changes by Windows' clipboard listener, by XFixes on
+X11, and by the data-control protocol on Wayland compositors that have it (KDE Plasma, Sway,
+Hyprland and other wlroots ones).
+
+**Hotkey instead.** In Settings → Trigger, **Press once** uses a global shortcut
+(`Ctrl+Shift+T` by default). It translates what is already on the clipboard, so copy first.
+
+**Wayland on GNOME.** GNOME has neither data-control nor (for apps like this one) global shortcuts.
+When XWayland is running, the app watches its clipboard instead, which follows copies from
+Wayland apps too. Without XWayland, use the tray's **Translate clipboard**, or bind a GNOME
+keyboard shortcut (Settings → Keyboard → Custom Shortcuts) to `quicktranslate --translate`. The
+log says which watcher is in use (`trigger: clipboard watcher = …`).
+
+**From scripts.** With the app running, `quicktranslate --translate` opens the panel for the
+clipboard and `quicktranslate --settings` opens Settings (the second launch passes the request on
+and exits). The command is `quicktranslate` (`/usr/bin/quicktranslate` from the `.deb`), the
+AppImage itself, or `quicktranslate.exe` on Windows (`%LOCALAPPDATA%\QuickTranslate\` for the
+installer).
+
+### Troubleshooting
+
+- **"`claude` CLI not found"**: the app looks on the `PATH` and in the usual install places (npm's
+  global folder, Volta, fnm, nvm, bun, scoop, `~/.local/bin`, …), then asks a login shell
+  (`where.exe` on Windows). If yours is elsewhere, set **CLI path** in Settings and press **Test**
+  (`where claude` in a terminal on Windows, `command -v claude` on Linux, shows the path). On Windows
+  npm installs a `claude.cmd` shim; point the setting at it or at `claude.exe`.
+- **Works in a terminal, not from the app menu**: launchers don't read `.bashrc`, so a `PATH` set
+  there is missing. The app adds the CLI's own folder to the `PATH` it passes on, so an npm shim
+  finds the `node` next to it (nvm, fnm). If `node` lives somewhere else, set the CLI path to a
+  wrapper script or install Node system-wide.
+- **No tray icon on GNOME**: enable the AppIndicator extension (see Requirements) and log out and
+  in. The icon is a white glyph made for dark panels; on a light panel it is hard to see.
+- **Ctrl+C Ctrl+C does nothing**: check the log for the watcher (see Wayland above), or switch to
+  the hotkey.
+- **Logs**: `%LOCALAPPDATA%\QuickTranslate\QuickTranslate.log` on Windows,
+  `~/.local/state/QuickTranslate/QuickTranslate.log` on Linux (`$XDG_STATE_HOME` if set).
+  Settings are in `%APPDATA%\dev.longfin.quicktranslate\settings.json` and
+  `~/.config/dev.longfin.quicktranslate/settings.json`.
+
 ## Localization
 
 The UI is English by default and switches to Korean or Japanese automatically based on the system
@@ -119,7 +221,8 @@ language, create `macos/Resources/<lang>.lproj/Localizable.strings` (keys are th
 
 ## Project layout
 
-`macos/` is the macOS app. A `desktop/` Tauri app for Windows and Linux is planned ([#3](https://github.com/longfin/quick-translate/issues/3)).
+`macos/` is the macOS app. `desktop/` is the Tauri app for Windows and Linux; its layout is in
+[`desktop/README.md`](desktop/README.md).
 
 ```
 macos/Sources/QuickTranslate/
