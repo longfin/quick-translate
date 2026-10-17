@@ -30,6 +30,8 @@ tauri-plugin-global-shortcut = "2"
 sys-locale = "0.3"
 # Language detection (Phase 5): Latin-script languages (trigram model, ~80 KB crate, no default features).
 whatlang = { version = "0.18", default-features = false }
+# Settings (Phase 4): "Run at startup" (HKCU Run key on Windows, XDG autostart .desktop on Linux).
+tauri-plugin-autostart = "2"
 
 [target.'cfg(unix)'.dependencies]
 # setsid() / killpg for process-tree cancellation (already in the tree via tokio).

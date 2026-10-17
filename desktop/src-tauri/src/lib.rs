@@ -1,10 +1,12 @@
 //! QuickTranslate for Windows and Linux (issue #3). A tray-only app: no window at startup,
-//! nothing in the taskbar. The translation panel is pre-created hidden (`tauri.conf.json`,
-//! label `panel`) so showing it later is instant.
+//! nothing in the taskbar. The translation panel and the Settings window are pre-created hidden
+//! (`tauri.conf.json`, labels `panel` and `settings`) so showing them later is instant.
 
 mod engine;
+mod i18n;
 mod log;
 mod panel;
+mod settings;
 mod trigger;
 mod tray;
 
@@ -37,6 +39,11 @@ fn handler<R: tauri::Runtime>() -> impl Fn(tauri::ipc::Invoke<R>) -> bool + Send
         panel::panel_set_pinned,
         panel::panel_copy,
         panel::panel_mark,
+        settings::settings_get,
+        settings::settings_update,
+        settings::settings_set_hotkey,
+        settings::settings_detect_cli,
+        settings::settings_hide,
     ]
 }
 
@@ -50,7 +57,12 @@ pub fn run() {
             if args.iter().skip(1).any(|a| a == "--translate") {
                 trigger::fire(app, trigger::Source::SecondInstance);
             }
+            if args.iter().skip(1).any(|a| a == "--settings") {
+                settings::open(app);
+            }
         }))
+        // Run at startup: HKCU Run key (Windows), XDG autostart `.desktop` (Linux).
+        .plugin(tauri_plugin_autostart::Builder::new().build())
         .invoke_handler(handler())
         .setup(|app| {
             // Runs only in the primary instance; a second one exits inside the plugin above.
@@ -64,9 +76,13 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
-            tray::create(app.handle())?;
             engine::commands::init(app.handle());
+            settings::init(app.handle());
+            tray::create(app.handle())?;
             trigger::start(app.handle());
+            if std::env::args().skip(1).any(|a| a == "--settings") {
+                settings::open(app.handle());
+            }
             Ok(())
         })
         .build(tauri::generate_context!())

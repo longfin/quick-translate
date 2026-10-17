@@ -99,3 +99,9 @@
 "Copied" = "복사됨";
 "Source language" = "원문 언어";
 "Swap languages" = "언어 바꾸기";
+"Nothing to translate. Select text and press Ctrl+C twice." = "번역할 텍스트가 없습니다. 텍스트를 선택한 뒤 Ctrl+C를 두 번 누르세요.";
+"The shortcut translates what is already on the clipboard: copy the text first." = "단축키는 클립보드에 있는 텍스트를 번역합니다. 먼저 텍스트를 복사하세요.";
+"Use Ctrl, Alt or Super with the key, or a function key." = "Ctrl, Alt, Super 중 하나와 함께 누르거나 기능 키(F1 등)를 사용하세요.";
+"Couldn't register the shortcut: {error}" = "단축키를 등록할 수 없습니다: {error}";
+"Couldn't change the startup setting: {error}" = "시스템 시작 시 실행 설정을 바꿀 수 없습니다: {error}";
+"Settings file: {path}" = "설정 파일: {path}";

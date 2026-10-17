@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>QuickTranslate Settings</title>
+    <link rel="stylesheet" href="/src/theme.css" />
+    <link rel="stylesheet" href="/src/settings.css" />
+    <script type="module" src="/src/settings.ts" defer></script>
+  </head>
+  <body>
+    <main>
+      <section>
+        <h2 data-i18n="Translation Engine"></h2>
+        <div class="group">
+          <div class="row">
+            <label for="backend" data-i18n="Engine"></label>
+            <select id="backend">
+              <option value="claude">Claude (Claude Code CLI)</option>
+              <option value="codex">ChatGPT (Codex CLI)</option>
+            </select>
+          </div>
+          <div class="row stacked">
+            <label for="model" id="model-label"></label>
+            <input id="model" type="text" spellcheck="false" autocomplete="off" />
+          </div>
+          <div class="row stacked">
+            <label for="cli-path" id="path-label"></label>
+            <input id="cli-path" type="text" spellcheck="false" autocomplete="off" />
+          </div>
+          <div class="row">
+            <span id="detected" class="note mono"></span>
+            <button id="test" data-i18n="Test"></button>
+          </div>
+          <div class="row" id="test-row" hidden>
+            <span id="test-result" class="note mono"></span>
+          </div>
+          <div class="row" id="warm-row">
+            <label class="check">
+              <input id="keep-warm" type="checkbox" />
+              <span data-i18n="Keep Claude running in the background (faster, ~300 MB RAM)"></span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 data-i18n="Languages"></h2>
+        <div class="group">
+          <div class="row">
+            <label for="target" data-i18n="Default target language"></label>
+            <select id="target"></select>
+          </div>
+          <div class="row">
+            <label for="fallback" data-i18n="If already in that language, translate to"></label>
+            <select id="fallback"></select>
+          </div>
+          <div class="row">
+            <label for="ui-language" data-i18n="Interface language"></label>
+            <select id="ui-language">
+              <option value="system" data-i18n="System default"></option>
+              <option value="en">English</option>
+              <option value="ko">한국어</option>
+              <option value="ja">日本語</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 data-i18n="Hotkey & Window"></h2>
+        <div class="group">
+          <div class="row">
+            <span id="trigger-label" data-i18n="Trigger"></span>
+            <div class="segmented" role="radiogroup" aria-labelledby="trigger-label">
+              <label><input type="radio" name="trigger" value="double" /><span data-i18n="Press twice"></span></label>
+              <label><input type="radio" name="trigger" value="once" /><span data-i18n="Press once"></span></label>
+            </div>
+          </div>
+          <div class="row">
+            <span data-i18n="Shortcut"></span>
+            <span class="shortcut">
+              <kbd id="shortcut" tabindex="-1"></kbd>
+              <button id="record" data-i18n="Change…"></button>
+            </span>
+          </div>
+          <div class="row" id="interval-row">
+            <label for="interval" data-i18n="Double-press interval"></label>
+            <span class="slider">
+              <input id="interval" type="range" min="0.2" max="1" step="0.05" />
+              <output id="interval-value" for="interval"></output>
+            </span>
+          </div>
+          <div class="row" id="once-note" hidden>
+            <span class="note" data-i18n="The shortcut translates what is already on the clipboard: copy the text first."></span>
+          </div>
+          <div class="row" id="hotkey-error" hidden>
+            <span class="note error"></span>
+          </div>
+          <div class="row" id="clipboard-notice" hidden>
+            <span class="note warn" data-i18n="Clipboard notifications aren't available on this desktop; use the hotkey or the tray menu."></span>
+          </div>
+          <div class="row">
+            <label class="check">
+              <input id="close-outside" type="checkbox" />
+              <span data-i18n="Close when clicking outside"></span>
+            </label>
+          </div>
+          <div class="row">
+            <label class="check">
+              <input id="autostart" type="checkbox" />
+              <span data-i18n="Run at startup"></span>
+            </label>
+          </div>
+          <div class="row" id="autostart-error" hidden>
+            <span class="note error"></span>
+          </div>
+        </div>
+      </section>
+
+      <p id="settings-path" class="note mono"></p>
+    </main>
+  </body>
+</html>
