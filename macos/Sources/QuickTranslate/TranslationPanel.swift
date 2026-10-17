@@ -71,6 +71,23 @@ final class TranslationPanelController {
 
     var isVisible: Bool { panel.isVisible }
 
+    /// Pays for SwiftUI's first layout/render of the content and the toolbar up front, so the
+    /// first real `show` is as fast as later ones (#6). The panel is ordered in fully transparent
+    /// and out again in the same run-loop turn: nothing is composited and nothing takes focus.
+    func warmUp() {
+        guard !panel.isVisible else { return }
+        let start = Date()
+        panel.alphaValue = 0
+        panel.ignoresMouseEvents = true
+        panel.orderFrontRegardless()
+        panel.contentView?.layoutSubtreeIfNeeded()
+        panel.displayIfNeeded()
+        panel.orderOut(nil)
+        panel.ignoresMouseEvents = false
+        panel.alphaValue = 1
+        Log.write(String(format: "panel warmed up in %.0f ms", Date().timeIntervalSince(start) * 1000))
+    }
+
     func show(text: String) {
         if panel.isMiniaturized {
             panel.deminiaturize(nil)
