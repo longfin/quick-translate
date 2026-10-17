@@ -87,8 +87,11 @@ wait_log "tray ready" || fail "no tray"
 wait_log "trigger: clipboard watcher = X11," || fail "X11 clipboard watcher not picked"
 pass "started, tray ready, X11 clipboard watcher"
 
-# Ctrl+C Ctrl+C: two clipboard owners within the double-press interval.
+# Ctrl+C Ctrl+C: two clipboard owners within the double-press interval (400 ms), but more than
+# 50 ms apart (closer changes count as one copy).
+sleep 0.5
 copy "Smoke test, copied twice."
+sleep 0.15
 copy "Smoke test, copied twice."
 wait_log "TRIGGER source=DoubleCopy chars=25" || fail "copying twice did not trigger"
 wait_log "panel: shown" || fail "panel not shown after the double copy"
