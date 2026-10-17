@@ -28,6 +28,8 @@ arboard = { version = "3", default-features = false }
 tauri-plugin-global-shortcut = "2"
 # Panel (Phase 3): the system languages, for the default target / fallback language.
 sys-locale = "0.3"
+# Language detection (Phase 5): Latin-script languages (trigram model, ~80 KB crate, no default features).
+whatlang = { version = "0.18", default-features = false }
 
 [target.'cfg(unix)'.dependencies]
 # setsid() / killpg for process-tree cancellation (already in the tree via tokio).
