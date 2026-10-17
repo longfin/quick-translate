@@ -16,29 +16,23 @@ use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, Runtime, WebviewWindo
 
 use crate::engine::commands::{self as engine, load_settings, settings_path};
 use crate::engine::settings::Backend;
+use crate::engine::language;
 use crate::trigger::Trigger;
 use crate::{log, PANEL};
 
-/// Target languages, in menu order. Same list (and English names, which go into the prompt) as
-/// `AppSettings.languages` in the Swift app. The web UI gets it from [`panel_init`].
-pub const LANGUAGES: [&str; 16] = [
-    "Korean",
-    "English",
-    "Japanese",
-    "Chinese (Simplified)",
-    "Chinese (Traditional)",
-    "Spanish",
-    "French",
-    "German",
-    "Portuguese",
-    "Italian",
-    "Russian",
-    "Vietnamese",
-    "Thai",
-    "Indonesian",
-    "Hindi",
-    "Arabic",
-];
+/// Target languages, in menu order: the names of [`language::LANGUAGES`] (same list and English
+/// names as `AppSettings.languages` in the Swift app). The web UI gets it from [`panel_init`].
+pub const LANGUAGES: [&str; 16] = {
+    let all = language::LANGUAGES;
+    assert!(all.len() == 16);
+    let mut names = [""; 16];
+    let mut i = 0;
+    while i < names.len() {
+        names[i] = all[i].name;
+        i += 1;
+    }
+    names
+};
 
 /// The panel's size in `tauri.conf.json` (logical pixels), like Swift's `defaultSize`.
 const DEFAULT_SIZE: (f64, f64) = (480.0, 340.0);
@@ -50,10 +44,9 @@ const CURSOR_OFFSET: f64 = 12.0;
 const BLUR_GRACE_MS: u128 = 300;
 
 /// The language of `text`, as one of [`LANGUAGES`], or `None` when unsure (the model then
-/// detects it itself).
-pub fn source_language(_text: &str) -> Option<String> {
-    // TODO(Phase 5): engine::language::detect
-    None
+/// detects it itself). Script-based for non-Latin scripts, `whatlang` for Latin ones.
+pub fn source_language(text: &str) -> Option<String> {
+    language::detect(text)
 }
 
 /// Whether an unpinned panel hides when it loses focus (Swift `closeOnOutsideClick`).

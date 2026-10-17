@@ -3,7 +3,10 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow, type Theme } from "@tauri-apps/api/window";
-import { t } from "./i18n";
+import { initI18n, t } from "./i18n";
+
+// System language until Settings (Phase 4) add an interface-language preference.
+initI18n("system");
 
 interface View {
   id: number;

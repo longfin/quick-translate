@@ -95,3 +95,7 @@
 "Run at startup" = "システム起動時に実行";
 "Clipboard notifications aren't available on this desktop; use the hotkey or the tray menu." = "このデスクトップではクリップボードの変化を検出できません。ショートカットまたはトレイメニューを使用してください。";
 "Nothing to translate" = "翻訳するテキストがありません";
+"Close (Esc)" = "閉じる (Esc)";
+"Copied" = "コピーしました";
+"Source language" = "原文の言語";
+"Swap languages" = "言語を入れ替え";
