@@ -7,7 +7,7 @@
 
 use std::time::Duration;
 
-use x11rb::connection::Connection;
+use x11rb::connection::{Connection, RequestConnection as _};
 use x11rb::errors::ReplyOrIdError;
 use x11rb::protocol::xfixes::{self, ConnectionExt as _, SelectionEventMask};
 use x11rb::protocol::xproto::{
