@@ -298,9 +298,10 @@ fn restart<R: Runtime>(app: &AppHandle<R>, show: Option<Instant>) {
             state().id = view.id;
             let _ = app.emit_to(PANEL, "panel://start", view);
             if let Some(started) = show {
-                // Window and monitor calls on the event loop's thread, not a tokio worker.
-                let handle = app.clone();
-                let _ = app.run_on_main_thread(move || show_window(&handle, started));
+                // From this worker thread on purpose: each window call is queued to the event
+                // loop, so the focus request lands after the map. Called on the main thread,
+                // X11 without a window manager got no input focus (Esc / Ctrl+W lost).
+                show_window(&app, started);
             }
         };
 
