@@ -15,5 +15,12 @@ export default defineConfig({
   },
   build: {
     target: "es2021",
+    // Two pages: the translation panel and the Settings window.
+    rollupOptions: {
+      input: {
+        panel: "index.html",
+        settings: "settings.html",
+      },
+    },
   },
 });
