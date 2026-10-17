@@ -54,6 +54,28 @@ To regenerate the icons from `docs/icon-1024.png`, run `pnpm tauri icon ../docs/
 then delete the generated `android/`, `ios/`, `Square*Logo.png` and `StoreLogo.png`, which aren't
 used.
 
+## Cross-building for Windows from macOS
+
+A plain `.exe` (no installer) can be built on an Apple Silicon Mac with
+[cargo-xwin](https://github.com/rust-cross/cargo-xwin), which downloads the Windows SDK and CRT
+from Microsoft on first use (about 1 GB, into `~/Library/Caches/cargo-xwin`; using them means
+accepting the Visual Studio license):
+
+```bash
+brew install llvm lld                       # clang-cl, llvm-rc, lld-link
+cargo install --locked cargo-xwin
+rustup target add aarch64-pc-windows-msvc   # or x86_64-pc-windows-msvc
+
+cd desktop && pnpm install && pnpm build    # web UI into dist/
+cd src-tauri
+PATH=/opt/homebrew/opt/llvm/bin:$PATH cargo xwin build --release --target aarch64-pc-windows-msvc
+# → target/aarch64-pc-windows-msvc/release/quicktranslate.exe
+```
+
+The result is self-contained: the WebView2 loader and the VC runtime are linked statically, so it
+runs as-is on Windows 11 (the WebView2 Runtime ships with the OS). Builds take about a minute
+after the first SDK download. NSIS/MSI installers still need Windows; CI produces those.
+
 ## Logs
 
 Timestamped lines, appended, in the same format as the macOS app:
