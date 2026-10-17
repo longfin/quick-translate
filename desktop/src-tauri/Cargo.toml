@@ -26,6 +26,8 @@ serde_json = "1"
 # Trigger (Phase 2): clipboard text read (later also the copy button's write), single-press hotkey.
 arboard = { version = "3", default-features = false }
 tauri-plugin-global-shortcut = "2"
+# Panel (Phase 3): the system languages, for the default target / fallback language.
+sys-locale = "0.3"
 
 [target.'cfg(unix)'.dependencies]
 # setsid() / killpg for process-tree cancellation (already in the tree via tokio).

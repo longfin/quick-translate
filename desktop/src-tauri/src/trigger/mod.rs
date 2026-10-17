@@ -207,7 +207,6 @@ pub fn set_interval(interval: Duration) {
 
 /// Ignore the next `n` clipboard changes (within one second): call right before the app writes
 /// the clipboard itself (the panel's copy button), so that write isn't counted as a Ctrl+C.
-#[allow(dead_code)] // used by the copy button in Phase 3
 pub fn suppress_next(n: u32) {
     lock().suppress(n, Instant::now());
 }
