@@ -49,11 +49,6 @@
       "nsis": {
         "installMode": "currentUser"
       }
-    },
-    "linux": {
-      "deb": {
-        "depends": ["libayatana-appindicator3-1"]
-      }
     }
   }
 }
