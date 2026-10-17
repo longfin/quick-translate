@@ -4,9 +4,10 @@ A Tauri 2 tray app that brings QuickTranslate to Windows and Linux. The macOS ap
 [`../macos`](../macos) is still the native Swift one; both apps share the same design but no code.
 The plan and its progress are tracked in [#3](https://github.com/longfin/quick-translate/issues/3).
 
-**Status: Phase 4 (Settings window).** Tray, triggers, engine, translation panel, language
-detection, the shared string catalogs and the Settings window work; packaging, docs and release
-(Phase 7) are next.
+**Status: feature complete for a first release (0.1.0).** Tray, triggers, engine, translation
+panel, language detection, the shared string catalogs, the Settings window, packaging and the
+release workflow are in place. User-facing docs (requirements, install, Wayland, troubleshooting)
+are in the root [README](../README.md#windows--linux); changes in [CHANGELOG.md](CHANGELOG.md).
 
 ## Layout
 
@@ -22,6 +23,12 @@ src-tauri/
   src/engine/   claude / codex CLI engine (Phase 1)
   src/trigger/  Ctrl+C Ctrl+C, hotkey (Phase 2)
   src/panel.rs  translation panel: placement near the cursor, pin, languages (Phase 3)
+  icons/        app icons (full colour) and tray.svg -> tray-{32,64}.png (white tray glyph)
+scripts/
+  linux-smoke.sh       headless smoke test (Xvfb), run in CI
+  build-tray-icons.sh  renders icons/tray.svg
+  gnome-headless/      headless GNOME Shell sessions for checking the tray by hand
+tools/          strings-to-json (the macOS .strings -> src/locales/*.json)
 ```
 
 ## Prerequisites
@@ -49,8 +56,8 @@ pnpm tauri dev      # run with the Vite dev server; Rust changes rebuild automat
 pnpm tauri build    # release build + bundles in src-tauri/target/release/bundle/
 ```
 
-Bundles: NSIS installer and MSI on Windows, AppImage and `.deb` on Linux. CI
-([`desktop.yml`](../.github/workflows/desktop.yml)) builds both and uploads them as artifacts.
+Bundles: NSIS installer on Windows, AppImage and `.deb` on Linux (`--bundles nsis` etc. to pick
+one). CI is described under [Release](#release).
 
 The app has no window at startup and no taskbar entry; look for the tray icon. Launching it a
 second time does not start another copy: the running instance logs the second launch's arguments.
@@ -69,7 +76,11 @@ selection first yet.
 
 To regenerate the icons from `docs/icon-1024.png`, run `pnpm tauri icon ../docs/icon-1024.png`,
 then delete the generated `android/`, `ios/`, `Square*Logo.png` and `StoreLogo.png`, which aren't
-used.
+used. The tray uses its own monochrome glyph, `src-tauri/icons/tray.svg` (the macOS menu bar icon in
+white); after editing it run `scripts/build-tray-icons.sh` (needs `rsvg-convert`). The PNGs are
+decoded at compile time (`tauri::include_image!`). White suits the dark Windows notification area
+and most Linux panels; on a light Linux panel it is hard to see, since there is no portable way to
+ask a panel for its colour.
 
 ## Panel
 
@@ -164,3 +175,31 @@ Timestamped lines, appended, in the same format as the macOS app:
 | macOS (dev only) | `~/Library/Logs/QuickTranslate-desktop.log` |
 
 The same lines also go to stderr, so they show up in the `pnpm tauri dev` terminal.
+
+## Release
+
+| | Runner | Bundles |
+| --- | --- | --- |
+| Windows x64 | `windows-latest` | `QuickTranslate-<v>-windows-x64-setup.exe`, `…-windows-x64-portable.zip` |
+| Windows ARM64 | `windows-11-arm` | `QuickTranslate-<v>-windows-arm64-setup.exe`, `…-windows-arm64-portable.zip` |
+| Linux x86_64 | `ubuntu-22.04` | `QuickTranslate-<v>-linux-x86_64.AppImage`, `QuickTranslate_<v>_amd64.deb` |
+| Linux aarch64 | `ubuntu-22.04-arm` | `QuickTranslate-<v>-linux-aarch64.AppImage`, `QuickTranslate_<v>_arm64.deb` |
+
+All builds are native (no cross-compiling). Linux builds on Ubuntu 22.04 so the bundles run on
+**glibc 2.35** and newer. The portable zip is `quicktranslate.exe` plus `LICENSE.txt`. The `.deb`
+package is called `quick-translate` and depends on `libayatana-appindicator3-1`,
+`libwebkit2gtk-4.1-0` and `libgtk-3-0`.
+
+- [`desktop-build.yml`](../.github/workflows/desktop-build.yml) (reusable) builds the matrix, runs
+  [`scripts/linux-smoke.sh`](scripts/linux-smoke.sh) on both Linux runners and uploads one artifact
+  per platform with the names above.
+- [`desktop.yml`](../.github/workflows/desktop.yml) runs it for pushes to `main` and pull requests
+  (Windows x64 and Linux x86_64 only, to stay fast) and for "Run workflow" (all four).
+- [`release.yml`](../.github/workflows/release.yml) runs on a `desktop-v<version>` tag: checks that
+  the tag matches the version in `package.json`, `tauri.conf.json` and `Cargo.toml`, builds all four,
+  and creates a **draft** GitHub release with the bundles, `SHA256SUMS` and the notes from
+  [`.github/desktop-release-notes.md`](../.github/desktop-release-notes.md). Steps in
+  [CONTRIBUTING](../CONTRIBUTING.md#releasing-the-desktop-app).
+
+The builds are **not code-signed**: Windows SmartScreen asks for "More info → Run anyway", and the
+release notes say so. Signing, winget and Flathub are for later.
