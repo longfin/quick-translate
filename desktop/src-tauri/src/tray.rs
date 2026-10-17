@@ -1,5 +1,6 @@
 //! Tray icon and its menu: Translate clipboard / Settings… / Quit, in the interface language.
 
+use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, Manager, Runtime};
@@ -9,6 +10,16 @@ use crate::{i18n, log};
 const TRANSLATE: &str = "translate";
 const SETTINGS: &str = "settings";
 const QUIT: &str = "quit";
+
+/// Monochrome tray glyph (white + alpha, from `icons/tray.svg`; the full-colour icon stays on the
+/// windows and installers). Windows' notification area and most Linux panels are dark, so one
+/// white glyph is used everywhere; on a light Linux panel it is hard to see. Decoded at compile
+/// time, so the app needs no image decoder. Windows draws it at 16 px (32 px at 200 %); Linux
+/// panels scale the larger one.
+#[cfg(windows)]
+const TRAY_ICON: Image<'static> = tauri::include_image!("icons/tray-32.png");
+#[cfg(not(windows))]
+const TRAY_ICON: Image<'static> = tauri::include_image!("icons/tray-64.png");
 
 /// The menu items whose text follows `uiLanguage`.
 struct Items<R: Runtime> {
@@ -50,8 +61,11 @@ pub fn create<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
             }
             other => log::write(format!("unknown tray menu item: {other}")),
         });
-    if let Some(icon) = app.default_window_icon() {
-        tray = tray.icon(icon.clone());
+    tray = tray.icon(TRAY_ICON);
+    // Dev builds on macOS: let the menu bar tint the glyph for light / dark.
+    #[cfg(target_os = "macos")]
+    {
+        tray = tray.icon_as_template(true);
     }
     tray.build(app)?;
     log::write("tray ready");
