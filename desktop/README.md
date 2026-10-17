@@ -78,6 +78,20 @@ The target language comes from `targetLanguage` / `fallbackLanguage` in the sett
 set, else from the system languages (same rule as the macOS app); text already in the target
 language goes to the fallback.
 
+## Localization
+
+UI strings are shared with the macOS app: they live in
+[`macos/Resources/*.lproj/Localizable.strings`](../macos/Resources) (English, Korean, Japanese),
+keyed by the English text. Strings only the desktop app uses sit in their own section at the end of
+each file. After editing them, run
+
+```bash
+pnpm strings:json   # regenerates src/locales/{en,ko,ja}.json; commit the result
+```
+
+It fails, listing the keys, when Korean or Japanese lacks a string (`--allow-missing` falls back to
+English). In the UI, `t("English text", { name: value })` from `src/i18n.ts` looks a string up.
+
 ## Logs
 
 Timestamped lines, appended, in the same format as the macOS app:

@@ -88,3 +88,10 @@
 "Indonesian" = "인도네시아어";
 "Hindi" = "힌디어";
 "Arabic" = "아랍어";
+
+/* Desktop app (Windows / Linux) only */
+"Translate clipboard" = "클립보드 번역";
+"Quit" = "종료";
+"Run at startup" = "시스템 시작 시 실행";
+"Clipboard notifications aren't available on this desktop; use the hotkey or the tray menu." = "이 데스크톱에서는 클립보드 변화를 감지할 수 없습니다. 단축키나 트레이 메뉴를 사용하세요.";
+"Nothing to translate" = "번역할 텍스트가 없습니다";

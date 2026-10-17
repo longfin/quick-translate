@@ -1,2 +1,9 @@
 /* English is the development language; keys are the English strings. */
 "Translate Clipboard (⌘C ⌘C)" = "Translate Clipboard (⌘C ⌘C)";
+
+/* Desktop app (Windows / Linux) only */
+"Translate clipboard" = "Translate clipboard";
+"Quit" = "Quit";
+"Run at startup" = "Run at startup";
+"Clipboard notifications aren't available on this desktop; use the hotkey or the tray menu." = "Clipboard notifications aren't available on this desktop; use the hotkey or the tray menu.";
+"Nothing to translate" = "Nothing to translate";
