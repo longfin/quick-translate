@@ -11,10 +11,10 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, MutexGuard, Once};
 use std::time::Instant;
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, Runtime, WebviewWindow, WindowEvent};
 
-use crate::engine::commands::{self as engine, load_settings, settings_path};
+use crate::engine::commands as engine;
 use crate::engine::settings::Backend;
 use crate::engine::language;
 use crate::trigger::Trigger;
@@ -51,8 +51,7 @@ pub fn source_language(text: &str) -> Option<String> {
 
 /// Whether an unpinned panel hides when it loses focus (Swift `closeOnOutsideClick`).
 fn close_on_outside_click() -> bool {
-    // TODO(Phase 4): read `closeOnOutsideClick` from the settings store (default true).
-    true
+    crate::settings::current().close_on_outside_click
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -113,6 +112,8 @@ pub struct Init {
     languages: &'static [&'static str],
     pinned: bool,
     is_mac: bool,
+    /// The `uiLanguage` setting; `settings://changed` brings later changes.
+    ui_language: String,
     /// The current view, if a trigger came before the webview loaded.
     view: Option<View>,
 }
@@ -121,26 +122,13 @@ pub struct Init {
 // Languages
 // ---------------------------------------------------------------------------------------------
 
-/// The `targetLanguage` / `fallbackLanguage` keys of the Swift `AppSettings`.
-#[derive(Default, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
-struct LanguageSettings {
-    target_language: Option<String>,
-    fallback_language: Option<String>,
-}
-
-/// (target, fallback): the settings file's, else derived from the system languages like Swift's
-/// `AppSettings.systemDefaultLanguages()`.
-fn language_defaults<R: Runtime>(app: &AppHandle<R>) -> (String, String) {
-    // TODO(Phase 4): read these from the settings store with the other keys.
-    let file: LanguageSettings = settings_path(app)
-        .and_then(|p| std::fs::read_to_string(p).ok())
-        .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default();
-    let known = |l: Option<String>| l.filter(|l| LANGUAGES.contains(&l.as_str()));
+/// (target, fallback): `targetLanguage` / `fallbackLanguage` from the settings, else derived
+/// from the system languages like Swift's `AppSettings.systemDefaultLanguages()`.
+pub fn language_defaults() -> (String, String) {
+    let settings = crate::settings::current();
     let (sys_target, sys_fallback) = system_default_languages(sys_locale::get_locales());
-    let target = known(file.target_language).unwrap_or(sys_target);
-    let fallback = known(file.fallback_language).unwrap_or(sys_fallback);
+    let target = settings.target_language.unwrap_or(sys_target);
+    let fallback = settings.fallback_language.unwrap_or(sys_fallback);
     (target, fallback)
 }
 
@@ -223,8 +211,8 @@ fn target_for(detected: Option<&str>, defaults: &(String, String)) -> String {
     }
 }
 
-fn engine_label<R: Runtime>(app: &AppHandle<R>) -> String {
-    let settings = load_settings(app);
+fn engine_label() -> String {
+    let settings = crate::settings::current();
     let name = match settings.backend {
         Backend::Claude => "Claude",
         Backend::Codex => "ChatGPT",
@@ -249,7 +237,7 @@ pub fn show_for<R: Runtime>(app: &AppHandle<R>, trigger: Trigger) {
     } else {
         source_language(&trigger.text)
     };
-    let defaults = language_defaults(app);
+    let defaults = language_defaults();
     {
         let mut st = state();
         st.target = target_for(detected.as_deref(), &defaults);
@@ -266,7 +254,7 @@ fn restart<R: Runtime>(app: &AppHandle<R>, show: Option<Instant>) {
     let app = app.clone();
     // The engine spawns tokio tasks: run inside the async runtime (triggers come from threads).
     tauri::async_runtime::spawn(async move {
-        let defaults = language_defaults(&app);
+        let defaults = language_defaults();
         let (text, source, detected, target) = {
             let st = state();
             (
@@ -285,7 +273,7 @@ fn restart<R: Runtime>(app: &AppHandle<R>, show: Option<Instant>) {
             target: target.clone(),
             fallback: fallback.clone(),
             empty,
-            engine: engine_label(&app),
+            engine: engine_label(),
         };
         let announce = |view: View| {
             state().id = view.id;
@@ -475,7 +463,7 @@ fn place(
 
 /// The language list, pin state and the current view (if a trigger beat the webview's load).
 #[tauri::command]
-pub fn panel_init<R: Runtime>(app: AppHandle<R>) -> Init {
+pub fn panel_init() -> Init {
     let view = {
         let st = state();
         (!st.target.is_empty()).then(|| {
@@ -489,7 +477,7 @@ pub fn panel_init<R: Runtime>(app: AppHandle<R>) -> Init {
         })
     };
     let view = view.map(|(id, text, source, detected, target)| {
-        let defaults = language_defaults(&app);
+        let defaults = language_defaults();
         View {
             id,
             empty: text.trim().is_empty(),
@@ -498,13 +486,14 @@ pub fn panel_init<R: Runtime>(app: AppHandle<R>) -> Init {
             source,
             detected,
             target,
-            engine: engine_label(&app),
+            engine: engine_label(),
         }
     });
     Init {
         languages: &LANGUAGES,
         pinned: PINNED.load(Ordering::SeqCst),
         is_mac: cfg!(target_os = "macos"),
+        ui_language: crate::settings::current().ui_language,
         view,
     }
 }

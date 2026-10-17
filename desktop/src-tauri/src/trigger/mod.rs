@@ -11,10 +11,10 @@
 //!     ([`wayland`]); otherwise XWayland's clipboard via [`x11`], otherwise
 //!     [`Backend::Unsupported`] so Settings can say so.
 //!   - macOS: dev-only polling watcher so the state machine can be exercised on a Mac.
-//! - **Single-press hotkey** (optional, off by default): [`shortcut`].
+//! - **Single-press hotkey** (instead of double copy, from the settings): [`shortcut`].
 //! - **Tray** "Translate clipboard" and **`--translate`** from a second instance: [`fire`].
 
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
@@ -55,7 +55,7 @@ pub struct Trigger {
     pub text: String,
 }
 
-/// Which clipboard watcher is running. Settings (Phase 4) shows a notice for `Unsupported`.
+/// Which clipboard watcher is running. Settings shows a notice for `Unsupported`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(dead_code)] // each platform constructs only its own variants
 pub enum Backend {
@@ -98,6 +98,9 @@ type Reader = fn() -> Option<String>;
 static READER: OnceLock<Reader> = OnceLock::new();
 static BACKEND: OnceLock<Backend> = OnceLock::new();
 static INTERVAL_MS: AtomicU64 = AtomicU64::new(DEFAULT_INTERVAL.as_millis() as u64);
+/// Whether clipboard changes are counted (trigger = double copy). Off in hotkey mode, like the
+/// Swift app stopping its pasteboard watcher for other shortcuts.
+static DOUBLE_COPY: AtomicBool = AtomicBool::new(true);
 static MACHINE: Mutex<DoubleCopy> = Mutex::new(DoubleCopy::new());
 
 pub const DEFAULT_INTERVAL: Duration = Duration::from_millis(400);
@@ -110,12 +113,9 @@ const MERGE_WINDOW: Duration = Duration::from_millis(50);
 /// How long a [`suppress_next`] stays armed if the write never shows up.
 const SUPPRESS_TTL: Duration = Duration::from_secs(1);
 
-/// Start the clipboard watcher for this platform. Call once from `setup`.
+/// Start the clipboard watcher for this platform. Call once from `setup`, after the settings
+/// applied the interval and the trigger mode.
 pub fn start<R: Runtime>(app: &AppHandle<R>) {
-    // Dev override until Settings (Phase 4) owns the interval.
-    if let Some(ms) = std::env::var("QUICKTRANSLATE_INTERVAL_MS").ok().and_then(|v| v.parse().ok()) {
-        set_interval(Duration::from_millis(ms));
-    }
     let handle = app.clone();
     let sink: Sink = Arc::new(move |kind| on_change(&handle, kind));
     let backend = start_backend(sink);
@@ -130,7 +130,6 @@ pub fn start<R: Runtime>(app: &AppHandle<R>) {
              use the tray item or the hotkey",
         );
     }
-    shortcut::start(app);
 }
 
 #[cfg(windows)]
@@ -190,7 +189,6 @@ fn start_backend(_sink: Sink) -> Backend {
 }
 
 /// The running watcher, once [`start`] has run.
-#[allow(dead_code)] // read by Settings in Phase 4
 pub fn backend() -> Option<Backend> {
     BACKEND.get().copied()
 }
@@ -200,9 +198,20 @@ pub fn interval() -> Duration {
     Duration::from_millis(INTERVAL_MS.load(Ordering::Relaxed))
 }
 
-/// Change the double-press interval (Settings, Phase 4).
+/// Change the double-press interval (from the settings).
 pub fn set_interval(interval: Duration) {
-    INTERVAL_MS.store(interval.as_millis() as u64, Ordering::Relaxed);
+    let old = INTERVAL_MS.swap(interval.as_millis() as u64, Ordering::Relaxed);
+    if old != interval.as_millis() as u64 {
+        log::write(format!("trigger: interval = {} ms", interval.as_millis()));
+    }
+}
+
+/// Count clipboard changes (Ctrl+C Ctrl+C) or not (the single-press hotkey is the trigger).
+pub fn set_double_copy(on: bool) {
+    if DOUBLE_COPY.swap(on, Ordering::SeqCst) != on {
+        *lock() = DoubleCopy::new();
+        log::write(format!("trigger: double copy {}", if on { "on" } else { "off" }));
+    }
 }
 
 /// Ignore the next `n` clipboard changes (within one second): call right before the app writes
@@ -216,6 +225,9 @@ fn lock() -> std::sync::MutexGuard<'static, DoubleCopy> {
 }
 
 fn on_change<R: Runtime>(app: &AppHandle<R>, kind: Kind) {
+    if !DOUBLE_COPY.load(Ordering::SeqCst) {
+        return;
+    }
     let now = Instant::now();
     let decision = lock().on_change(now, kind, interval());
     match decision {
