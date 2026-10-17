@@ -40,6 +40,9 @@ pub const LANGUAGES: [&str; 16] = [
     "Arabic",
 ];
 
+/// The panel's size in `tauri.conf.json` (logical pixels), like Swift's `defaultSize`.
+const DEFAULT_SIZE: (f64, f64) = (480.0, 340.0);
+
 /// Distance between the cursor and the panel's top-left corner, in logical pixels (Swift: 12).
 const CURSOR_OFFSET: f64 = 12.0;
 
@@ -406,11 +409,17 @@ fn position_near_cursor<R: Runtime>(app: &AppHandle<R>, w: &WebviewWindow<R>) {
         return;
     };
     let scale = monitor.scale_factor();
-    let rescale = scale / w.scale_factor().unwrap_or(scale);
+    // A never-shown window can report a 0/1 px size (GTK before the first map): use the default.
+    let size = if size.width < 100 || size.height < 100 {
+        (DEFAULT_SIZE.0 * scale, DEFAULT_SIZE.1 * scale)
+    } else {
+        let rescale = scale / w.scale_factor().unwrap_or(scale);
+        (size.width as f64 * rescale, size.height as f64 * rescale)
+    };
     let area = monitor.work_area();
     let (x, y) = place(
         (cursor.x, cursor.y),
-        (size.width as f64 * rescale, size.height as f64 * rescale),
+        size,
         (
             area.position.x as f64,
             area.position.y as f64,
@@ -419,6 +428,18 @@ fn position_near_cursor<R: Runtime>(app: &AppHandle<R>, w: &WebviewWindow<R>) {
         ),
         CURSOR_OFFSET * scale,
     );
+    log::write(format!(
+        "panel: cursor ({:.0}, {:.0}), work area {}x{} at ({}, {}), scale {scale}, \
+         size {:.0}x{:.0} -> ({x:.0}, {y:.0})",
+        cursor.x,
+        cursor.y,
+        area.size.width,
+        area.size.height,
+        area.position.x,
+        area.position.y,
+        size.0,
+        size.1
+    ));
     let _ = w.set_position(PhysicalPosition::new(x.round() as i32, y.round() as i32));
 }
 
