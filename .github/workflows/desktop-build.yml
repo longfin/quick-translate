@@ -1,0 +1,125 @@
+# Builds the desktop/ app and its bundles; called by desktop.yml (CI) and release.yml (tags).
+# Bundles are renamed to stable file names (see the "Stage bundles" step) and uploaded as one
+# artifact per platform, `quicktranslate-<platform>`.
+name: desktop-build
+
+on:
+  workflow_call:
+    inputs:
+      full:
+        description: "All four platforms; otherwise only Windows x64 and Linux x86_64"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      include: ${{ steps.matrix.outputs.include }}
+    steps:
+      - id: matrix
+        env:
+          FULL: ${{ inputs.full }}
+        run: |
+          # name: artifact suffix and file name part; os: runner (all native, no cross-compiling).
+          # Linux builds on 22.04 so the AppImage and .deb run on glibc 2.35 and newer.
+          all='[
+            {"name": "windows-x64",   "os": "windows-latest"},
+            {"name": "linux-x86_64",  "os": "ubuntu-22.04",     "deb": "amd64"},
+            {"name": "windows-arm64", "os": "windows-11-arm"},
+            {"name": "linux-aarch64", "os": "ubuntu-22.04-arm", "deb": "arm64"}
+          ]'
+          if [ "$FULL" = true ]; then
+            include="$all"
+          else
+            include="$(jq -c '[.[] | select(.name == "windows-x64" or .name == "linux-x86_64")]' <<<"$all")"
+          fi
+          echo "include=$(jq -c . <<<"$include")" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: build (${{ matrix.name }})
+    needs: matrix
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.matrix.outputs.include) }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: desktop
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential file patchelf libssl-dev libgtk-3-dev \
+            libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev \
+            xvfb xclip dbus-x11 xdotool x11-utils
+
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: desktop/package.json
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: desktop/pnpm-lock.yaml
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri -> target
+          key: ${{ matrix.name }}
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then bundles=nsis; else bundles=appimage,deb; fi
+          pnpm tauri build --bundles "$bundles"
+
+      - name: Smoke test (Xvfb)
+        if: runner.os == 'Linux'
+        run: scripts/linux-smoke.sh src-tauri/target/release/quicktranslate
+
+      - name: Stage bundles
+        env:
+          NAME: ${{ matrix.name }}
+          DEB_ARCH: ${{ matrix.deb }}
+        run: |
+          version="$(node -p 'require("./src-tauri/tauri.conf.json").version')"
+          base="QuickTranslate-$version-$NAME"
+          bundle=src-tauri/target/release/bundle
+          out=../dist-release
+          mkdir -p "$out"
+          one() { # the glob matched exactly one existing file
+            [ $# -eq 1 ] && [ -e "$1" ] || { echo "expected one bundle, got: $*" >&2; return 1; }
+            echo "$1"
+          }
+          if [ "$RUNNER_OS" = Windows ]; then
+            cp "$(one "$bundle"/nsis/*-setup.exe)" "$out/$base-setup.exe"
+            portable="../portable/$base"
+            mkdir -p "$portable"
+            cp src-tauri/target/release/quicktranslate.exe "$portable/quicktranslate.exe"
+            cp ../LICENSE "$portable/LICENSE.txt"
+            pwsh -NoProfile -Command "Compress-Archive -Path '$portable/*' -DestinationPath '$out/$base-portable.zip'"
+          else
+            cp "$(one "$bundle"/appimage/*.AppImage)" "$out/$base.AppImage"
+            cp "$(one "$bundle"/deb/*.deb)" "$out/QuickTranslate_${version}_${DEB_ARCH}.deb"
+          fi
+          ls -l "$out"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: quicktranslate-${{ matrix.name }}
+          if-no-files-found: error
+          path: dist-release/*
