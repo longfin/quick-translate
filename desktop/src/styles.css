@@ -1,0 +1,17 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, "Segoe UI", Ubuntu, Cantarell, sans-serif;
+  font-size: 14px;
+}
+
+body {
+  margin: 0;
+}
+
+#panel {
+  padding: 12px 14px;
+}
+
+.placeholder {
+  opacity: 0.6;
+}
