@@ -177,10 +177,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func translateClipboard(afterDelay delay: TimeInterval) {
         // Give the frontmost app a moment to finish writing the pasteboard after the second ⌘C.
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-            guard let self else { return }
-            let text = NSPasteboard.general.string(forType: .string) ?? ""
-            self.panelController.show(text: text)
+            self?.readPasteboardString { self?.panelController.show(text: $0) }
         }
+    }
+
+    /// The copying app's `clearContents()` bumps `changeCount` before it writes the string,
+    /// so a read right after the trigger can see an empty pasteboard. Retry briefly (10 × 20 ms).
+    private func readPasteboardString(attempt: Int = 0, then completion: @escaping (String) -> Void) {
+        let text = NSPasteboard.general.string(forType: .string) ?? ""
+        if text.isEmpty, attempt < 10 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) { [weak self] in
+                self?.readPasteboardString(attempt: attempt + 1, then: completion)
+            }
+            return
+        }
+        if attempt > 0 {
+            Log.write("pasteboard was empty; \(text.isEmpty ? "still empty" : "got text") after \(attempt) retries")
+        }
+        completion(text)
     }
 
     /// Single-press shortcuts: copy the selection ourselves, then translate whatever landed on the pasteboard.
@@ -192,8 +206,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if NSPasteboard.general.changeCount == before {
                 Log.write("copy keystroke did not change the pasteboard; translating existing clipboard")
             }
-            let text = NSPasteboard.general.string(forType: .string) ?? ""
-            self.panelController.show(text: text)
+            self.readPasteboardString { [weak self] in self?.panelController.show(text: $0) }
         }
     }
 
