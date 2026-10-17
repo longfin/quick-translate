@@ -43,9 +43,8 @@ pub fn create<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     Ok(())
 }
 
-/// Phase 2 wires this to the engine; for now it only proves the menu works.
-pub fn translate_clipboard<R: Runtime>(_app: &AppHandle<R>) {
-    log::write("TODO translate clipboard");
+pub fn translate_clipboard<R: Runtime>(app: &AppHandle<R>) {
+    crate::trigger::fire(app, crate::trigger::Source::Tray);
 }
 
 /// Phase 4 opens the settings window.

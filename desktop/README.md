@@ -50,6 +50,18 @@ Bundles: NSIS installer and MSI on Windows, AppImage and `.deb` on Linux. CI
 The app has no window at startup and no taskbar entry; look for the tray icon. Launching it a
 second time does not start another copy: the running instance logs the second launch's arguments.
 
+## Triggers
+
+Copying twice within 400 ms (Ctrl+C Ctrl+C), the tray's "Translate clipboard", the optional
+`Ctrl+Shift+T` hotkey and `quicktranslate --translate` (sent to the running instance) all end in
+`on_trigger` in `lib.rs`. The log names the clipboard watcher in use (`trigger: clipboard watcher =
+…`): Windows clipboard listener, X11 XFixes, Wayland data-control (wlroots, KDE), XWayland, or
+`Unsupported` (e.g. GNOME on Wayland without XWayland: use the tray item or the hotkey).
+
+Until Settings exist, two environment variables help during development:
+`QUICKTRANSLATE_INTERVAL_MS=<ms>` changes the double-copy interval and `QUICKTRANSLATE_HOTKEY=1`
+turns the hotkey on.
+
 To regenerate the icons from `docs/icon-1024.png`, run `pnpm tauri icon ../docs/icon-1024.png`,
 then delete the generated `android/`, `ios/`, `Square*Logo.png` and `StoreLogo.png`, which aren't
 used.
