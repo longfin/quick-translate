@@ -298,7 +298,9 @@ fn restart<R: Runtime>(app: &AppHandle<R>, show: Option<Instant>) {
             state().id = view.id;
             let _ = app.emit_to(PANEL, "panel://start", view);
             if let Some(started) = show {
-                show_window(&app, started);
+                // Window and monitor calls on the event loop's thread, not a tokio worker.
+                let handle = app.clone();
+                let _ = app.run_on_main_thread(move || show_window(&handle, started));
             }
         };
 
@@ -400,10 +402,26 @@ fn position_near_cursor<R: Runtime>(app: &AppHandle<R>, w: &WebviewWindow<R>) {
         log::write("panel: cursor position unavailable, keeping the last position");
         return;
     };
-    let monitor = app
-        .monitor_from_point(cursor.x, cursor.y)
-        .ok()
-        .flatten()
+    // Search the monitors ourselves by physical rect; `monitor_from_point` is only a fallback.
+    let contains = |m: &tauri::Monitor| {
+        let (p, s) = (m.position(), m.size());
+        let (x, y) = (cursor.x - p.x as f64, cursor.y - p.y as f64);
+        x >= 0.0 && y >= 0.0 && x < s.width as f64 && y < s.height as f64
+    };
+    let monitors = app.available_monitors().unwrap_or_default();
+    let found = monitors.iter().find(|m| contains(m)).cloned();
+    if found.is_none() {
+        let rects: Vec<String> = monitors
+            .iter()
+            .map(|m| {
+                let (p, s) = (m.position(), m.size());
+                format!("{}x{} at ({}, {})", s.width, s.height, p.x, p.y)
+            })
+            .collect();
+        log::write(format!("panel: no monitor contains the cursor: {rects:?}"));
+    }
+    let monitor = found
+        .or_else(|| app.monitor_from_point(cursor.x, cursor.y).ok().flatten())
         .or_else(|| app.primary_monitor().ok().flatten());
     let (Some(monitor), Ok(size)) = (monitor, w.outer_size()) else {
         return;
