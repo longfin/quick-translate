@@ -63,8 +63,9 @@ Menu bar icon → **Settings…**
 
 - **Engine**: Claude (Claude Code CLI) or ChatGPT (Codex CLI)
 - **Model**: for Claude `haiku` (default, fastest) / `sonnet` / `opus`; for Codex leave blank for the default
-- **Keep Claude running in the background**: on by default. A resident `claude` process (~300 MB) makes each
-  translation about 0.7–1.3 s instead of ~2 s. Turn it off to spawn a fresh process per translation.
+- **Keep Claude running in the background**: on by default. A resident `claude` process (~240 MB RSS,
+  ~110 MB memory footprint) skips the CLI start-up (~0.5 s) on every translation. Turn it off to spawn a fresh
+  process per translation.
 - **CLI path**: set manually if auto-detection fails (e.g. `~/.local/bin/claude`)
 - **Languages**: default target language and the fallback used when the text is already in it
 - **Interface language**: follow the system, or force English / 한국어 / 日本語 (the app restarts to apply)

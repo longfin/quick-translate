@@ -61,7 +61,7 @@ cd macos
 
 - **엔진**: Claude (Claude Code CLI) / ChatGPT (Codex CLI)
 - **모델**: Claude는 `haiku`(기본, 가장 빠름) / `sonnet` / `opus`, Codex는 비우면 기본 모델
-- **Claude를 백그라운드에 상주**: 기본 켬. `claude` 프로세스(약 300MB)를 띄워둬서 번역 1건이 약 2초에서 0.7~1.3초로 줄어듭니다.
+- **Claude를 백그라운드에 상주**: 기본 켬. `claude` 프로세스(RSS 약 240MB, 메모리 사용량 약 110MB)를 띄워둬서 번역할 때마다 CLI 시작 시간(약 0.5초)을 건너뜁니다.
   끄면 번역마다 새 프로세스를 띄웁니다.
 - **CLI 경로**: 자동 탐색이 실패하면 직접 지정 (`~/.local/bin/claude` 등)
 - **언어**: 기본 번역 언어와, 원문이 이미 그 언어일 때 사용할 언어

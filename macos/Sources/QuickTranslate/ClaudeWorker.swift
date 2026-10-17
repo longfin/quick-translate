@@ -1,8 +1,8 @@
 import Foundation
 
-/// A resident `claude -p --input-format stream-json` process. Keeping it alive skips the ~0.6 s CLI
-/// startup and keeps the HTTP connection and prompt cache warm, so a translation takes ~0.7 s instead
-/// of ~2.2 s. After every turn we send `/clear`, which resets the conversation locally (no API call),
+/// A resident `claude -p --input-format stream-json` process. Keeping it alive skips the CLI
+/// start-up (~0.5 s) and keeps the HTTP connection and prompt cache warm on every translation; API
+/// latency (which varies by ±0.5 s run to run) is unchanged. After every turn we send `/clear`, which resets the conversation locally (no API call),
 /// so each translation still starts from a fresh context.
 final class ClaudeWorker {
     static let shared = ClaudeWorker()
