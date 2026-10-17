@@ -12,13 +12,26 @@ use tauri::RunEvent;
 /// Label of the pre-created, hidden translation window.
 pub const PANEL: &str = "panel";
 
+/// Every trigger (double copy, hotkey, tray, `--translate`) ends here.
+/// Stub until the panel (Phase 3) wires it to `engine::commands::translate`: logs, shows nothing.
+pub fn on_trigger<R: tauri::Runtime>(_app: &tauri::AppHandle<R>, trigger: trigger::Trigger) {
+    log::write(format!(
+        "TRIGGER source={:?} chars={}",
+        trigger.source,
+        trigger.text.chars().count()
+    ));
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app = tauri::Builder::default()
         // Must be the first plugin registered.
-        .plugin(tauri_plugin_single_instance::init(|_app, args, _cwd| {
-            // Phase 2 routes `--translate` here as a scripting trigger.
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             log::write(format!("second instance launched, args={:?}", args.get(1..).unwrap_or(&[])));
+            // Scripting trigger: `quicktranslate --translate`.
+            if args.iter().skip(1).any(|a| a == "--translate") {
+                trigger::fire(app, trigger::Source::SecondInstance);
+            }
         }))
         .invoke_handler(engine::commands::handler())
         .setup(|app| {
@@ -35,6 +48,7 @@ pub fn run() {
 
             tray::create(app.handle())?;
             engine::commands::init(app.handle());
+            trigger::start(app.handle());
             Ok(())
         })
         .build(tauri::generate_context!())
