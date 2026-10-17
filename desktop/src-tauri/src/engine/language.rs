@@ -5,9 +5,6 @@
 //! to the app's languages, handles Latin-script text. Results are the app's language identifiers
 //! (`Language::name`, e.g. `"Korean"`), the same strings Swift stores in `targetLanguage`.
 
-// Wired into the panel and the trigger after Phase 3 lands.
-#![allow(dead_code)]
-
 use whatlang::{Detector, Lang};
 
 /// One of the app's translation languages.
