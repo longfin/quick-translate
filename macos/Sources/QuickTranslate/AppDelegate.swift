@@ -38,6 +38,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.async { self?.configureHotkey() }
         }.store(in: &cancellables)
         TranslationEngine.shared.prewarm(settings: settings)
+        // After the status item is up, so cold start doesn't pay for it.
+        DispatchQueue.main.async { [weak self] in self?.panelController.warmUp() }
 
         // External trigger (e.g. Raycast / Hammerspoon / scripts):
         //   osascript -l JavaScript -e 'ObjC.import("Foundation"); $.NSDistributedNotificationCenter.defaultCenter.postNotificationNameObject("dev.swen.QuickTranslate.translate", null)'
