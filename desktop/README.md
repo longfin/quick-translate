@@ -23,7 +23,7 @@ src-tauri/
   src/engine/   claude / codex CLI engine (Phase 1)
   src/trigger/  Ctrl+C Ctrl+C, hotkey (Phase 2)
   src/panel.rs  translation panel: placement near the cursor, pin, languages (Phase 3)
-  icons/        app icons (full colour) and tray.svg -> tray-{32,64}.png (white tray glyph)
+  icons/        app icons (full colour) and tray.svg -> tray-{32,64}.png (monochrome tray glyph)
 scripts/
   linux-smoke.sh       headless smoke test (Xvfb), run in CI
   build-tray-icons.sh  renders icons/tray.svg
@@ -78,9 +78,10 @@ To regenerate the icons from `docs/icon-1024.png`, run `pnpm tauri icon ../docs/
 then delete the generated `android/`, `ios/`, `Square*Logo.png` and `StoreLogo.png`, which aren't
 used. The tray uses its own monochrome glyph, `src-tauri/icons/tray.svg` (the macOS menu bar icon in
 white); after editing it run `scripts/build-tray-icons.sh` (needs `rsvg-convert`). The PNGs are
-decoded at compile time (`tauri::include_image!`). White suits the dark Windows notification area
-and most Linux panels; on a light Linux panel it is hard to see, since there is no portable way to
-ask a panel for its colour.
+decoded at compile time (`tauri::include_image!`). On Windows the glyph follows the system's
+light / dark mode (black on the default light taskbar, white in dark mode; read at startup). On
+Linux it stays white, which suits most panels; on a light Linux panel it is hard to see, since there
+is no portable way to ask a panel for its colour.
 
 ## Panel
 
@@ -185,7 +186,8 @@ The same lines also go to stderr, so they show up in the `pnpm tauri dev` termin
 | Linux x86_64 | `ubuntu-22.04` | `QuickTranslate-<v>-linux-x86_64.AppImage`, `QuickTranslate_<v>_amd64.deb` |
 | Linux aarch64 | `ubuntu-22.04-arm` | `QuickTranslate-<v>-linux-aarch64.AppImage`, `QuickTranslate_<v>_arm64.deb` |
 
-All builds are native (no cross-compiling). Linux builds on Ubuntu 22.04 so the bundles run on
+CI builds are native (no cross-compiling; for a local Windows exe from a Mac see
+[Cross-building](#cross-building-for-windows-from-macos)). Linux builds on Ubuntu 22.04 so the bundles run on
 **glibc 2.35** and newer. The portable zip is `quicktranslate.exe` plus `LICENSE.txt`. The `.deb`
 package is called `quick-translate` and depends on `libayatana-appindicator3-1`,
 `libwebkit2gtk-4.1-0` and `libgtk-3-0`.
