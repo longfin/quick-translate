@@ -68,9 +68,14 @@ rustup target add aarch64-pc-windows-msvc   # or x86_64-pc-windows-msvc
 
 cd desktop && pnpm install && pnpm build    # web UI into dist/
 cd src-tauri
-PATH=/opt/homebrew/opt/llvm/bin:$PATH cargo xwin build --release --target aarch64-pc-windows-msvc
+PATH=/opt/homebrew/opt/llvm/bin:$PATH cargo xwin build --release \
+  --target aarch64-pc-windows-msvc --features tauri/custom-protocol
 # → target/aarch64-pc-windows-msvc/release/quicktranslate.exe
 ```
+
+`--features tauri/custom-protocol` matters: `tauri build` adds it for you, but a plain `cargo build`
+without it is a *dev* build that loads the UI from the Vite dev server (`devUrl`), so the panel shows
+WebView2's "can't reach this page" instead of the app.
 
 The result is self-contained: the WebView2 loader and the VC runtime are linked statically, so it
 runs as-is on Windows 11 (the WebView2 Runtime ships with the OS). Builds take about a minute
