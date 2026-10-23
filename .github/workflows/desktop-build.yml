@@ -10,6 +10,10 @@ on:
         description: "All four platforms; otherwise only Windows x64 and Linux x86_64"
         type: boolean
         default: false
+      macos_preview:
+        description: "Also build the macOS preview .app (universal, ad-hoc signed; not a release artifact)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -23,6 +27,7 @@ jobs:
       - id: matrix
         env:
           FULL: ${{ inputs.full }}
+          MACOS_PREVIEW: ${{ inputs.macos_preview }}
         run: |
           # name: artifact suffix and file name part; os: runner (all native, no cross-compiling).
           # Linux builds on 22.04 so the AppImage and .deb run on glibc 2.35 and newer.
@@ -36,6 +41,11 @@ jobs:
             include="$all"
           else
             include="$(jq -c '[.[] | select(.name == "windows-x64" or .name == "linux-x86_64")]' <<<"$all")"
+          fi
+          # The macOS preview is opt-in: the shipped macOS app is the Swift one, and its artifact
+          # name deliberately does not match release.yml's `quicktranslate-*` pattern.
+          if [ "$MACOS_PREVIEW" = true ]; then
+            include="$(jq -c '. + [{"name": "macos-universal", "os": "macos-latest", "preview": true}]' <<<"$include")"
           fi
           echo "include=$(jq -c . <<<"$include")" >> "$GITHUB_OUTPUT"
 
@@ -74,6 +84,9 @@ jobs:
           cache-dependency-path: desktop/pnpm-lock.yaml
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          # macOS: both halves of the universal binary (the runner is arm64).
+          targets: ${{ runner.os == 'macOS' && 'x86_64-apple-darwin,aarch64-apple-darwin' || '' }}
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -84,8 +97,11 @@ jobs:
 
       - name: Build
         run: |
-          if [ "$RUNNER_OS" = Windows ]; then bundles=nsis; else bundles=appimage,deb; fi
-          pnpm tauri build --bundles "$bundles"
+          case "$RUNNER_OS" in
+            Windows) pnpm tauri build --bundles nsis ;;
+            macOS)   pnpm tauri build --bundles app --target universal-apple-darwin ;;
+            *)       pnpm tauri build --bundles appimage,deb ;;
+          esac
 
       - name: Smoke test (Xvfb)
         if: runner.os == 'Linux'
@@ -105,7 +121,12 @@ jobs:
             [ $# -eq 1 ] && [ -e "$1" ] || { echo "expected one bundle, got: $*" >&2; return 1; }
             echo "$1"
           }
-          if [ "$RUNNER_OS" = Windows ]; then
+          if [ "$RUNNER_OS" = macOS ]; then
+            app="$(one src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app)"
+            lipo -archs "$app/Contents/MacOS/quicktranslate"
+            codesign --verify --strict "$app"
+            ditto -c -k --keepParent "$app" "$out/$base-preview.app.zip"
+          elif [ "$RUNNER_OS" = Windows ]; then
             cp "$(one "$bundle"/nsis/*-setup.exe)" "$out/$base-setup.exe"
             portable="../portable/$base"
             mkdir -p "$portable"
@@ -120,6 +141,6 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: quicktranslate-${{ matrix.name }}
+          name: ${{ matrix.preview && 'preview' || 'quicktranslate' }}-${{ matrix.name }}
           if-no-files-found: error
           path: dist-release/*

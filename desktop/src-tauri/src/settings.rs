@@ -336,6 +336,8 @@ pub fn open<R: Runtime>(app: &AppHandle<R>) {
     let _ = w.unminimize();
     let _ = w.show();
     let _ = w.set_focus();
+    #[cfg(target_os = "macos")]
+    crate::macos::activate(app);
     log::write("settings: window shown");
 }
 

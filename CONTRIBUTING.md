@@ -75,7 +75,8 @@ See "Project layout" in the README and [`desktop/README.md`](desktop/README.md).
   | `windows-sys` | Job Objects and the clipboard listener (Windows; already in Tauri's tree) |
   | `x11rb` | XFixes clipboard notifications (Linux X11 / XWayland) |
   | `wayland-client`, `wayland-protocols`, `wayland-protocols-wlr` | data-control clipboard notifications (Linux Wayland) |
-  | `objc2-app-kit` | the dev-only clipboard watcher on macOS |
+  | `objc2-app-kit` | the clipboard watcher on macOS (preview build and development) |
+  | `tauri-nspanel` | the non-activating `NSPanel` of the macOS preview build (macOS only) |
 
   Adding to it is a conscious decision: say why in the PR, and update this table.
 - No API keys, tokens or telemetry in either app. Authentication is the CLI's job.

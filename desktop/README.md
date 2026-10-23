@@ -42,8 +42,8 @@ tools/          strings-to-json (the macOS .strings -> src/locales/*.json)
     libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev
   ```
   On GNOME, the tray icon needs the AppIndicator extension.
-- **macOS**: Xcode Command Line Tools. macOS isn't a release target, but the app builds and runs
-  there for development.
+- **macOS**: Xcode Command Line Tools. macOS isn't a release target; the app builds and runs
+  there for development and as a [preview](#macos-preview).
 
 See also Tauri's [prerequisites](https://v2.tauri.app/start/prerequisites/).
 
@@ -137,6 +137,39 @@ pnpm strings:json   # regenerates src/locales/{en,ko,ja}.json; commit the result
 
 It fails, listing the keys, when Korean or Japanese lacks a string (`--allow-missing` falls back to
 English). In the UI, `t("English text", { name: value })` from `src/i18n.ts` looks a string up.
+
+## macOS preview
+
+The shipped macOS app is still the Swift one, but the Tauri app builds a usable macOS preview to
+compare the two (issue [#3](https://github.com/longfin/quick-translate/issues/3) keeps the option
+of retiring the Swift app open). It is **not** a release artifact.
+
+```bash
+rustup target add x86_64-apple-darwin aarch64-apple-darwin
+cd desktop && pnpm install
+pnpm tauri build --bundles app --target universal-apple-darwin
+# → src-tauri/target/universal-apple-darwin/release/bundle/macos/QuickTranslate.app
+```
+
+CI builds the same thing when the desktop workflow is run by hand with "Also build the macOS
+preview .app" ticked (artifact `preview-macos-universal`, a zipped `.app`; `release.yml` ignores
+it). The bundle is universal (arm64 + x86_64) and ad-hoc signed (`signingIdentity: "-"`), so it
+runs locally; a downloaded copy needs `xattr -d com.apple.quarantine` or a Developer ID build.
+
+What the preview does on macOS:
+
+- Menu-bar-only app (`LSUIElement`, `ActivationPolicy::Accessory`), template tray glyph.
+- The translation window is a non-activating `NSPanel` ([tauri-nspanel](https://crates.io/crates/tauri-nspanel)):
+  showing it keeps the frontmost app's focus and menu bar; Esc / Cmd+W and "close when clicking
+  outside" still work because the panel becomes key. It floats on every Space.
+- Cmd+C Cmd+C through a 60 ms `NSPasteboard.changeCount` poll (the pasteboard has no change
+  notification), the hotkey, "Run at startup" (LaunchAgent) and the Settings window all work.
+- Its bundle id is `dev.longfin.quicktranslate` (the Swift app is `dev.swen.QuickTranslate`), so
+  both can be installed, but both react to Cmd+C Cmd+C: quit one while trying the other. Settings
+  are separate too (`~/Library/Application Support/dev.longfin.quicktranslate/settings.json`).
+- Not reproduced from the Swift app: the native title bar / toolbar chrome (#2); the panel is the
+  same undecorated window as on Windows and Linux. Memory sits around 4× the Swift app's idle
+  footprint (WebKit helper processes).
 
 ## Cross-building for Windows from macOS
 
