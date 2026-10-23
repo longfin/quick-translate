@@ -12,14 +12,53 @@ const SETTINGS: &str = "settings";
 const QUIT: &str = "quit";
 
 /// Monochrome tray glyph (white + alpha, from `icons/tray.svg`; the full-colour icon stays on the
-/// windows and installers). Windows' notification area and most Linux panels are dark, so one
-/// white glyph is used everywhere; on a light Linux panel it is hard to see. Decoded at compile
-/// time, so the app needs no image decoder. Windows draws it at 16 px (32 px at 200 %); Linux
-/// panels scale the larger one.
+/// windows and installers). Most Linux panels are dark, so the white glyph is used as is; on a
+/// light Linux panel it is hard to see. Windows follows the system's light / dark mode (see
+/// [`tray_icon`]). Decoded at compile time, so the app needs no image decoder. Windows draws it
+/// at 16 px (32 px at 200 %); Linux panels scale the larger one.
 #[cfg(windows)]
 const TRAY_ICON: Image<'static> = tauri::include_image!("icons/tray-32.png");
 #[cfg(not(windows))]
 const TRAY_ICON: Image<'static> = tauri::include_image!("icons/tray-64.png");
+
+/// Windows: the taskbar is light unless "Choose your default Windows mode" is dark (the default
+/// on Windows 11 is light), and a white glyph is invisible on it, so the glyph is painted black
+/// there. Read once at startup; a mode change while running keeps the old colour until restart.
+#[cfg(windows)]
+fn tray_icon() -> Image<'static> {
+    use windows_sys::Win32::System::Registry::{RegGetValueW, HKEY_CURRENT_USER, RRF_RT_REG_DWORD};
+    let wide = |s: &str| s.encode_utf16().chain([0]).collect::<Vec<u16>>();
+    let key = wide("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize");
+    let name = wide("SystemUsesLightTheme");
+    let mut value: u32 = 0;
+    let mut size = std::mem::size_of::<u32>() as u32;
+    // SAFETY: the buffers outlive the call and `size` is the size of `value`.
+    let rc = unsafe {
+        RegGetValueW(
+            HKEY_CURRENT_USER,
+            key.as_ptr(),
+            name.as_ptr(),
+            RRF_RT_REG_DWORD,
+            std::ptr::null_mut(),
+            &mut value as *mut u32 as *mut _,
+            &mut size,
+        )
+    };
+    // Missing value (older Windows 10): dark taskbar, white glyph.
+    if rc != 0 || value == 0 {
+        return TRAY_ICON;
+    }
+    let mut rgba = TRAY_ICON.rgba().to_vec();
+    for px in rgba.as_chunks_mut::<4>().0 {
+        px[..3].fill(0);
+    }
+    Image::new_owned(rgba, TRAY_ICON.width(), TRAY_ICON.height())
+}
+
+#[cfg(not(windows))]
+fn tray_icon() -> Image<'static> {
+    TRAY_ICON
+}
 
 /// The menu items whose text follows `uiLanguage`.
 struct Items<R: Runtime> {
@@ -61,7 +100,7 @@ pub fn create<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
             }
             other => log::write(format!("unknown tray menu item: {other}")),
         });
-    tray = tray.icon(TRAY_ICON);
+    tray = tray.icon(tray_icon());
     // Dev builds on macOS: let the menu bar tint the glyph for light / dark.
     #[cfg(target_os = "macos")]
     {
