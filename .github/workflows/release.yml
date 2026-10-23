@@ -1,0 +1,77 @@
+# Desktop (Windows / Linux) release: pushing a tag `desktop-v<version>` builds all four
+# platforms and creates a *draft* GitHub release with the bundles and SHA256SUMS. Publish the
+# draft by hand after checking it. The tag must match the version in desktop/src-tauri/tauri.conf.json.
+# The macOS app is built and shipped separately (macos/build.sh).
+name: release
+
+on:
+  push:
+    tags: ["desktop-v*"]
+
+concurrency:
+  group: release-${{ github.ref }}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="$(jq -r .version desktop/src-tauri/tauri.conf.json)"
+          for f in desktop/package.json; do
+            v="$(jq -r .version "$f")"
+            [ "$v" = "$version" ] || { echo "::error::$f has $v, tauri.conf.json has $version"; exit 1; }
+          done
+          cargo_version="$(sed -n 's/^version = "\(.*\)"$/\1/p' desktop/src-tauri/Cargo.toml | head -n1)"
+          [ "$cargo_version" = "$version" ] || { echo "::error::Cargo.toml has $cargo_version, tauri.conf.json has $version"; exit 1; }
+          [ "$TAG" = "desktop-v$version" ] || { echo "::error::tag $TAG does not match version $version (expected desktop-v$version)"; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: check
+    uses: ./.github/workflows/desktop-build.yml
+    with:
+      full: true
+
+  release:
+    needs: [check, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: quicktranslate-*
+          merge-multiple: true
+          path: dist
+
+      - name: Checksums
+        working-directory: dist
+        run: |
+          sha256sum -- * > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          sed "s/{{VERSION}}/$VERSION/g" .github/desktop-release-notes.md > notes.md
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            # Re-run: replace the files, keep the (possibly edited) notes.
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* --draft --verify-tag \
+              --title "QuickTranslate for Windows & Linux $VERSION" --notes-file notes.md
+          fi
