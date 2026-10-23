@@ -99,7 +99,9 @@ impl Settings {
         let Ok(text) = std::fs::read_to_string(path) else {
             return Self::default();
         };
-        match serde_json::from_str::<Value>(&text) {
+        // Windows editors (Notepad, PowerShell 5's Set-Content) may prepend a UTF-8 BOM.
+        let text = text.trim_start_matches('\u{feff}');
+        match serde_json::from_str::<Value>(text) {
             Ok(Value::Object(map)) => Self::default().merged(&map, |key, e| {
                 crate::log::write(format!("settings: ignoring {key:?} in {}: {e}", path.display()))
             }),
@@ -212,6 +214,15 @@ impl Settings {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn utf8_bom_is_ignored() {
+        let path = std::env::temp_dir().join(format!("qt-settings-bom-{}.json", std::process::id()));
+        std::fs::write(&path, "\u{feff}{\"claudeModel\": \"sonnet\"}").unwrap();
+        let s = Settings::load(&path);
+        std::fs::remove_file(&path).ok();
+        assert_eq!(s.claude_model, "sonnet");
+    }
 
     fn parse(json: &str) -> Settings {
         match serde_json::from_str::<Value>(json).unwrap() {
