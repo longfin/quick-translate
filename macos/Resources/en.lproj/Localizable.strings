@@ -11,3 +11,9 @@
 "Copied" = "Copied";
 "Source language" = "Source language";
 "Swap languages" = "Swap languages";
+"Nothing to translate. Select text and press Ctrl+C twice." = "Nothing to translate. Select text and press Ctrl+C twice.";
+"The shortcut translates what is already on the clipboard: copy the text first." = "The shortcut translates what is already on the clipboard: copy the text first.";
+"Use Ctrl, Alt or Super with the key, or a function key." = "Use Ctrl, Alt or Super with the key, or a function key.";
+"Couldn't register the shortcut: {error}" = "Couldn't register the shortcut: {error}";
+"Couldn't change the startup setting: {error}" = "Couldn't change the startup setting: {error}";
+"Settings file: {path}" = "Settings file: {path}";

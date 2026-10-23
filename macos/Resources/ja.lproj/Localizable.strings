@@ -99,3 +99,9 @@
 "Copied" = "コピーしました";
 "Source language" = "原文の言語";
 "Swap languages" = "言語を入れ替え";
+"Nothing to translate. Select text and press Ctrl+C twice." = "翻訳するテキストがありません。テキストを選択して Ctrl+C を2回押してください。";
+"The shortcut translates what is already on the clipboard: copy the text first." = "ショートカットはクリップボードにあるテキストを翻訳します。先にテキストをコピーしてください。";
+"Use Ctrl, Alt or Super with the key, or a function key." = "Ctrl・Alt・Super のいずれかと組み合わせるか、ファンクションキー(F1 など)を使用してください。";
+"Couldn't register the shortcut: {error}" = "ショートカットを登録できませんでした: {error}";
+"Couldn't change the startup setting: {error}" = "システム起動時に実行する設定を変更できませんでした: {error}";
+"Settings file: {path}" = "設定ファイル: {path}";

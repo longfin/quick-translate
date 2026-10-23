@@ -3,9 +3,9 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow, type Theme } from "@tauri-apps/api/window";
-import { initI18n, t } from "./i18n";
+import { initI18n, t, type LocalePreference } from "./i18n";
 
-// System language until Settings (Phase 4) add an interface-language preference.
+// The system language until `panel_init` brings the `uiLanguage` setting.
 initI18n("system");
 
 interface View {
@@ -23,6 +23,7 @@ interface Init {
   languages: string[];
   pinned: boolean;
   isMac: boolean;
+  uiLanguage: LocalePreference;
   view: View | null;
 }
 
@@ -49,14 +50,28 @@ let firstDelta = true;
 let pinned = false;
 let isMac = false;
 let copiedTimer: number | undefined;
+let languages: string[] = [];
+let uiLanguage: LocalePreference = "system";
 
 // ---- static strings -------------------------------------------------------------------------
 
-for (const el of document.querySelectorAll<HTMLElement>("[data-i18n]")) {
-  el.textContent = t(el.dataset.i18n!);
+/** (Re)labels everything after the interface language is known or changed. */
+function applyStrings() {
+  for (const el of document.querySelectorAll<HTMLElement>("[data-i18n]")) {
+    el.textContent = t(el.dataset.i18n!);
+  }
+  for (const el of document.querySelectorAll<HTMLElement>("[data-i18n-title]")) {
+    el.title = t(el.dataset.i18nTitle!);
+  }
+  fillLanguages(languages);
+  setPinned(pinned);
 }
-for (const el of document.querySelectorAll<HTMLElement>("[data-i18n-title]")) {
-  el.title = t(el.dataset.i18nTitle!);
+
+function setUiLanguage(preference: LocalePreference) {
+  uiLanguage = preference;
+  initI18n(preference);
+  applyStrings();
+  render();
 }
 
 function fillLanguages(languages: string[]) {
@@ -174,6 +189,12 @@ void listen<{ id: number; message: string }>("translate://failed", (e) => {
   mark("error shown");
 });
 
+// The Settings window changed something: the interface language now, the rest (engine label,
+// languages) with the next translation.
+void listen<{ settings: { uiLanguage: LocalePreference } }>("settings://changed", (e) => {
+  if (e.payload.settings.uiLanguage !== uiLanguage) setUiLanguage(e.payload.settings.uiLanguage);
+});
+
 // ---- controls -------------------------------------------------------------------------------
 
 function retranslate(source: string | null, target: string) {
@@ -255,8 +276,8 @@ void win.onThemeChanged((e) => applyTheme(e.payload));
 
 void invoke<Init>("panel_init").then((init) => {
   isMac = init.isMac;
-  fillLanguages(init.languages);
-  setPinned(init.pinned);
+  languages = init.languages;
+  pinned = init.pinned;
+  setUiLanguage(init.uiLanguage);
   if (init.view && !view) start(init.view);
-  else render();
 });

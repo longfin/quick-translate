@@ -4,15 +4,19 @@ A Tauri 2 tray app that brings QuickTranslate to Windows and Linux. The macOS ap
 [`../macos`](../macos) is still the native Swift one; both apps share the same design but no code.
 The plan and its progress are tracked in [#3](https://github.com/longfin/quick-translate/issues/3).
 
-**Status: Phase 3 (translation panel).** Tray, triggers, engine and the translation panel work;
-the tray's "Settings…" only writes a log line for now (Phase 4).
+**Status: Phase 4 (Settings window).** Tray, triggers, engine, translation panel, language
+detection, the shared string catalogs and the Settings window work; packaging, docs and release
+(Phase 7) are next.
 
 ## Layout
 
 ```
-src/            web UI (vanilla TypeScript + Vite): the translation panel; i18n.ts = t(key)
+src/            web UI (vanilla TypeScript + Vite): main.ts = translation panel (index.html),
+                settings.ts = Settings window (settings.html), theme.css shared; i18n.ts = t(key)
 src-tauri/
   src/lib.rs    app setup, single instance
+  src/settings.rs  settings.json in memory, applying changes, the Settings window (Phase 4)
+  src/i18n.rs   the same string catalogs for the tray menu
   src/tray.rs   tray icon + menu
   src/log.rs    log file
   src/engine/   claude / codex CLI engine (Phase 1)
@@ -53,15 +57,15 @@ second time does not start another copy: the running instance logs the second la
 
 ## Triggers
 
-Copying twice within 400 ms (Ctrl+C Ctrl+C), the tray's "Translate clipboard", the optional
-`Ctrl+Shift+T` hotkey and `quicktranslate --translate` (sent to the running instance) all end in
+Copying twice within the double-press interval (Ctrl+C Ctrl+C, 400 ms by default) or, if chosen
+in Settings instead, a single-press hotkey (`Ctrl+Shift+T` by default), the tray's "Translate
+clipboard" and `quicktranslate --translate` (sent to the running instance) all end in
 `on_trigger` in `lib.rs`, which shows the panel near the cursor (`panel::show_for`). The log names the clipboard watcher in use (`trigger: clipboard watcher =
 …`): Windows clipboard listener, X11 XFixes, Wayland data-control (wlroots, KDE), XWayland, or
 `Unsupported` (e.g. GNOME on Wayland without XWayland: use the tray item or the hotkey).
 
-Until Settings exist, two environment variables help during development:
-`QUICKTRANSLATE_INTERVAL_MS=<ms>` changes the double-copy interval and `QUICKTRANSLATE_HOTKEY=1`
-turns the hotkey on.
+The hotkey translates what is already on the clipboard; unlike the macOS app it doesn't copy the
+selection first yet.
 
 To regenerate the icons from `docs/icon-1024.png`, run `pnpm tauri icon ../docs/icon-1024.png`,
 then delete the generated `android/`, `ios/`, `Square*Logo.png` and `StoreLogo.png`, which aren't
@@ -74,9 +78,39 @@ Unpinned, it hides when it loses focus ("close when clicking outside"), except w
 translation is still streaming, like the macOS app. Pinned, it stays on top and stays open. A
 trigger while the panel is visible replaces the text and restarts the translation in place.
 
-The target language comes from `targetLanguage` / `fallbackLanguage` in the settings file when
-set, else from the system languages (same rule as the macOS app); text already in the target
+The target language comes from `targetLanguage` / `fallbackLanguage` in the settings when set,
+else from the system languages (same rule as the macOS app); text already in the target
 language goes to the fallback.
+
+## Settings
+
+The tray's "Settings…" or `quicktranslate --settings` (also to a running instance) opens the
+Settings window: engine (Claude / Codex, model, CLI path with **Test**), target / fallback /
+interface language, trigger (Ctrl+C twice with its interval, or a single-press hotkey recorded
+from the keyboard), close when clicking outside, keep Claude warm and run at startup. Every change
+is saved and applied at once; Esc or Ctrl+W closes the window.
+
+They are stored as JSON in `<config dir>/dev.longfin.quicktranslate/settings.json`
+(`%APPDATA%\dev.longfin.quicktranslate\settings.json` on Windows,
+`~/.config/dev.longfin.quicktranslate/settings.json` on Linux), with the macOS app's
+`UserDefaults` keys:
+
+| Key | Default | |
+| --- | --- | --- |
+| `backend` | `"claude"` | or `"codex"` |
+| `claudeModel` / `codexModel` | `"haiku"` / `""` | blank = the CLI's default |
+| `claudePath` / `codexPath` | `""` | blank = auto-detect |
+| `keepClaudeWarm` | `true` | resident `claude` process |
+| `targetLanguage` / `fallbackLanguage` | unset | unset = from the system languages |
+| `uiLanguage` | `"system"` | `"en"`, `"ko"`, `"ja"`; applies without a restart |
+| `hotkeyDoublePress` | `true` | `true` = Ctrl+C Ctrl+C, `false` = the `hotkey` |
+| `hotkey` | `"Ctrl+Shift+T"` | desktop only (the Swift app stores macOS key codes) |
+| `doublePressInterval` | `0.4` | seconds, 0.2–1.0 |
+| `closeOnOutsideClick` | `true` | |
+| `launchAtLogin` | `false` | desktop only; the HKCU `Run` key / `~/.config/autostart/QuickTranslate.desktop` wins when they differ |
+
+A value of the wrong type falls back to its default; unknown keys are kept. The running app
+also notices when the file is edited by hand (within a second) and applies it.
 
 ## Localization
 

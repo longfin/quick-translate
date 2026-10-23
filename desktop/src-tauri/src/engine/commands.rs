@@ -9,7 +9,6 @@
 //! Like `TranslationViewModel.swift`, only the latest translation reports: starting a new one or
 //! calling `cancel` cancels the previous job and drops its in-flight events.
 
-use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -61,35 +60,15 @@ pub struct CliInfo {
     pub version: String,
 }
 
-/// `<app config dir>/settings.json` (e.g. `%APPDATA%\dev.longfin.quicktranslate\settings.json`,
-/// `~/.config/dev.longfin.quicktranslate/settings.json`).
-pub fn settings_path<R: Runtime>(app: &AppHandle<R>) -> Option<PathBuf> {
-    app.path()
-        .app_config_dir()
-        .ok()
-        .map(|d| d.join("settings.json"))
+/// The current settings (kept by `crate::settings`, which also reloads the file when it changes).
+pub fn load_settings<R: Runtime>(_app: &AppHandle<R>) -> Settings {
+    crate::settings::current()
 }
 
-pub fn load_settings<R: Runtime>(app: &AppHandle<R>) -> Settings {
-    settings_path(app)
-        .map(|p| Settings::load(&p))
-        .unwrap_or_default()
-}
-
-/// Called from `setup`: registers the state and pre-warms the Claude worker.
+/// Called from `setup`: registers the state. The warm Claude process starts when the settings
+/// are applied (`crate::settings::init`).
 pub fn init<R: Runtime>(app: &AppHandle<R>) {
     app.manage(EngineState::default());
-    let settings = load_settings(app);
-    log::write(format!(
-        "engine: settings {} backend={:?} model={:?} keepWarm={}",
-        settings_path(app)
-            .map(|p| p.display().to_string())
-            .unwrap_or_default(),
-        settings.backend,
-        settings.current_model(),
-        settings.keep_claude_warm
-    ));
-    tauri::async_runtime::spawn(async move { translation_engine::prewarm(&settings) });
 }
 
 /// Called on `RunEvent::Exit`: makes sure no `claude` process outlives the app.
