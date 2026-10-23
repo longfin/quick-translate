@@ -3,13 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <title>QuickTranslate</title>
     <link rel="stylesheet" href="/src/styles.css" />
     <script type="module" src="/src/main.ts" defer></script>
   </head>
   <body>
-    <main id="panel">
-      <p class="placeholder">QuickTranslate</p>
-    </main>
+    <header data-tauri-drag-region>
+      <select id="source" data-i18n-title="Source language"></select>
+      <button id="swap" class="icon" data-i18n-title="Swap languages">⇄</button>
+      <select id="target" data-i18n-title="Target language"></select>
+      <span class="spacer" data-tauri-drag-region></span>
+      <button id="pin" class="icon" aria-pressed="false">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+          <path d="M6 1.5h4l-.5 4.5 2.5 2.5v1H8.6V15h-1.2V9.5H4v-1L6.5 6z" />
+        </svg>
+      </button>
+      <button id="close" class="icon" data-i18n-title="Close (Esc)">✕</button>
+    </header>
+    <section id="source-text" class="source" tabindex="0"></section>
+    <section id="output" class="output" tabindex="0" aria-live="polite"></section>
+    <footer>
+      <span id="engine" class="dim"></span>
+      <span class="spacer"></span>
+      <span id="status" class="dim"></span>
+      <button id="cancel" hidden data-i18n="Cancel"></button>
+      <button id="retranslate" data-i18n="Retranslate"></button>
+      <button id="copy" class="primary" data-i18n="Copy"></button>
+    </footer>
   </body>
 </html>

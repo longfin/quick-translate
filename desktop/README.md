@@ -4,19 +4,20 @@ A Tauri 2 tray app that brings QuickTranslate to Windows and Linux. The macOS ap
 [`../macos`](../macos) is still the native Swift one; both apps share the same design but no code.
 The plan and its progress are tracked in [#3](https://github.com/longfin/quick-translate/issues/3).
 
-**Status: Phase 0 (scaffold).** The tray icon, its menu and single-instance handling work. The
-menu's "Translate clipboard" and "Settings…" items only write a log line for now.
+**Status: Phase 3 (translation panel).** Tray, triggers, engine and the translation panel work;
+the tray's "Settings…" only writes a log line for now (Phase 4).
 
 ## Layout
 
 ```
-src/            web UI (vanilla TypeScript + Vite)
+src/            web UI (vanilla TypeScript + Vite): the translation panel; i18n.ts = t(key)
 src-tauri/
   src/lib.rs    app setup, single instance
   src/tray.rs   tray icon + menu
   src/log.rs    log file
   src/engine/   claude / codex CLI engine (Phase 1)
   src/trigger/  Ctrl+C Ctrl+C, hotkey (Phase 2)
+  src/panel.rs  translation panel: placement near the cursor, pin, languages (Phase 3)
 ```
 
 ## Prerequisites
@@ -54,7 +55,7 @@ second time does not start another copy: the running instance logs the second la
 
 Copying twice within 400 ms (Ctrl+C Ctrl+C), the tray's "Translate clipboard", the optional
 `Ctrl+Shift+T` hotkey and `quicktranslate --translate` (sent to the running instance) all end in
-`on_trigger` in `lib.rs`. The log names the clipboard watcher in use (`trigger: clipboard watcher =
+`on_trigger` in `lib.rs`, which shows the panel near the cursor (`panel::show_for`). The log names the clipboard watcher in use (`trigger: clipboard watcher =
 …`): Windows clipboard listener, X11 XFixes, Wayland data-control (wlroots, KDE), XWayland, or
 `Unsupported` (e.g. GNOME on Wayland without XWayland: use the tray item or the hotkey).
 
@@ -65,6 +66,17 @@ turns the hotkey on.
 To regenerate the icons from `docs/icon-1024.png`, run `pnpm tauri icon ../docs/icon-1024.png`,
 then delete the generated `android/`, `ios/`, `Square*Logo.png` and `StoreLogo.png`, which aren't
 used.
+
+## Panel
+
+Esc or Ctrl+W (Cmd+W on macOS) hides it and cancels the translation; Ctrl+Enter retranslates.
+Unpinned, it hides when it loses focus ("close when clicking outside"), except while a
+translation is still streaming, like the macOS app. Pinned, it stays on top and stays open. A
+trigger while the panel is visible replaces the text and restarts the translation in place.
+
+The target language comes from `targetLanguage` / `fallbackLanguage` in the settings file when
+set, else from the system languages (same rule as the macOS app); text already in the target
+language goes to the fallback.
 
 ## Cross-building for Windows from macOS
 
