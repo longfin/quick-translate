@@ -5,6 +5,8 @@
 mod engine;
 mod i18n;
 mod log;
+#[cfg(target_os = "macos")]
+mod macos;
 mod panel;
 mod settings;
 mod trigger;
@@ -51,6 +53,7 @@ fn handler<R: tauri::Runtime>() -> impl Fn(tauri::ipc::Invoke<R>) -> bool + Send
 pub fn run() {
     let app = tauri::Builder::default()
         // Must be the first plugin registered.
+        .plugin(nspanel_plugin())
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             log::write(format!("second instance launched, args={:?}", args.get(1..).unwrap_or(&[])));
             // Scripting trigger: `quicktranslate --translate`.
@@ -61,7 +64,8 @@ pub fn run() {
                 settings::open(app);
             }
         }))
-        // Run at startup: HKCU Run key (Windows), XDG autostart `.desktop` (Linux).
+        // Run at startup: HKCU Run key (Windows), XDG autostart `.desktop` (Linux), LaunchAgent
+        // (macOS preview).
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .invoke_handler(handler())
         .setup(|app| {
@@ -72,9 +76,13 @@ pub fn run() {
                 log::path().map(|p| p.display().to_string()).unwrap_or_else(|| "none".into())
             ));
 
-            // Dev builds only: keep the macOS dock icon away, like the Swift app (LSUIElement).
+            // macOS preview: no Dock icon, like the Swift app (`LSUIElement` in Info.plist covers
+            // the launch itself), and the translation window becomes a non-activating NSPanel.
             #[cfg(target_os = "macos")]
-            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            {
+                app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+                macos::make_panel(app.handle(), PANEL)?;
+            }
 
             engine::commands::init(app.handle());
             settings::init(app.handle());
@@ -98,4 +106,14 @@ pub fn run() {
         }
         _ => {}
     });
+}
+
+/// The NSPanel plugin on macOS; a no-op plugin elsewhere, so the builder chain stays the same.
+#[cfg(target_os = "macos")]
+fn nspanel_plugin<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
+    tauri_nspanel::init()
+}
+#[cfg(not(target_os = "macos"))]
+fn nspanel_plugin<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
+    tauri::plugin::Builder::new("nspanel").build()
 }

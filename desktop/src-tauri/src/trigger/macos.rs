@@ -1,6 +1,6 @@
-//! DEV ONLY. macOS ships the Swift app (`macos/`); this watcher exists so the shared state
-//! machine can be run on a Mac while developing the Windows/Linux app. Polls
-//! `NSPasteboard.changeCount` every 60 ms, like `PasteboardWatcher.swift`.
+//! macOS (preview build and development): the shipped macOS app is still the Swift one in
+//! `macos/`. Polls `NSPasteboard.changeCount` every 60 ms, like `PasteboardWatcher.swift`; the
+//! pasteboard has no change notification.
 
 use std::time::Duration;
 

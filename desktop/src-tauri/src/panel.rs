@@ -323,16 +323,23 @@ fn show_window<R: Runtime>(app: &AppHandle<R>, started: Instant) {
     if !visible {
         position_near_cursor(app, &w);
     }
-    // Raise above whatever has focus (Windows refuses a plain SetForegroundWindow from a
-    // background process), then keep "always on top" only while pinned.
-    let pinned = PINNED.load(Ordering::SeqCst);
-    let _ = w.set_always_on_top(true);
-    let _ = w.show();
-    let _ = w.unminimize();
-    // Focus is needed for Esc / Ctrl+W and for "close when clicking outside" (blur).
-    let _ = w.set_focus();
-    if !pinned {
-        let _ = w.set_always_on_top(false);
+    // macOS preview: the NSPanel floats on its own level and is shown without activating the
+    // app (`set_focus` would). Elsewhere, raise above whatever has focus (Windows refuses a
+    // plain SetForegroundWindow from a background process), then keep "always on top" only
+    // while pinned.
+    #[cfg(target_os = "macos")]
+    crate::macos::show(app, PANEL);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let pinned = PINNED.load(Ordering::SeqCst);
+        let _ = w.set_always_on_top(true);
+        let _ = w.show();
+        let _ = w.unminimize();
+        // Focus is needed for Esc / Ctrl+W and for "close when clicking outside" (blur).
+        let _ = w.set_focus();
+        if !pinned {
+            let _ = w.set_always_on_top(false);
+        }
     }
     state().shown_at = Some(Instant::now());
     log::write(format!(
@@ -521,6 +528,10 @@ pub fn panel_hide<R: Runtime>(app: AppHandle<R>) {
 #[tauri::command]
 pub fn panel_set_pinned<R: Runtime>(app: AppHandle<R>, pinned: bool) {
     PINNED.store(pinned, Ordering::SeqCst);
+    // The macOS panel already floats; changing its level would drop it behind the active app.
+    #[cfg(target_os = "macos")]
+    let _ = &app;
+    #[cfg(not(target_os = "macos"))]
     if let Some(w) = window(&app) {
         let _ = w.set_always_on_top(pinned);
     }

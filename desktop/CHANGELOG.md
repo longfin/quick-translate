@@ -26,3 +26,5 @@ First release, planned in [#3](https://github.com/longfin/quick-translate/issues
 - **Phase 7, packaging**: NSIS installer and portable zip (Windows x64 and ARM64), AppImage and
   `.deb` (Linux x86_64 and aarch64), a release workflow with SHA256SUMS, a monochrome tray icon,
   a headless Linux smoke test in CI, and docs.
+- **macOS preview** (not a release artifact): universal, ad-hoc signed `.app` with a
+  non-activating `NSPanel`, built with `--target universal-apple-darwin` or the opt-in CI job.
