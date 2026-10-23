@@ -13,6 +13,7 @@
 pub mod claude_worker;
 pub mod cli_locator;
 pub mod commands;
+pub mod language;
 pub mod process_job;
 pub mod settings;
 pub mod translation_engine;
