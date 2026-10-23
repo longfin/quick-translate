@@ -3,18 +3,20 @@
 //!
 //! `GetClipboardSequenceNumber` drops notifications that don't correspond to a new clipboard
 //! (the listener can be re-notified for the same content), and `IsClipboardFormatAvailable`
-//! classifies the change without opening the clipboard (which would block the writer).
+//! classifies the change without opening the clipboard (which would block the writer): text,
+//! or one of the image / file formats below, else unknown (counted like text).
 
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::OnceLock;
 
 use windows_sys::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
 use windows_sys::Win32::System::DataExchange::{
-    AddClipboardFormatListener, CountClipboardFormats, GetClipboardSequenceNumber,
-    IsClipboardFormatAvailable,
+    AddClipboardFormatListener, GetClipboardSequenceNumber, IsClipboardFormatAvailable,
 };
 use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
-use windows_sys::Win32::System::Ole::CF_UNICODETEXT;
+use windows_sys::Win32::System::Ole::{
+    CF_BITMAP, CF_DIB, CF_DIBV5, CF_ENHMETAFILE, CF_HDROP, CF_UNICODETEXT, CLIPBOARD_FORMAT,
+};
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DispatchMessageW, GetMessageW, RegisterClassW,
     TranslateMessage, HWND_MESSAGE, MSG, WM_CLIPBOARDUPDATE, WNDCLASSW,
@@ -23,6 +25,9 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
 use super::{Kind, Sink};
 
 static SINK: OnceLock<Sink> = OnceLock::new();
+
+/// Formats that mean "an image or files were copied" when no text format is offered.
+const NON_TEXT: [CLIPBOARD_FORMAT; 5] = [CF_BITMAP, CF_DIB, CF_DIBV5, CF_ENHMETAFILE, CF_HDROP];
 
 pub fn start(sink: Sink) -> Result<(), String> {
     SINK.set(sink).map_err(|_| "already started".to_string())?;
@@ -113,10 +118,12 @@ fn on_update() {
     let kind = unsafe {
         if IsClipboardFormatAvailable(CF_UNICODETEXT as u32) != 0 {
             Kind::Text
-        } else if CountClipboardFormats() > 0 {
+        } else if NON_TEXT.iter().any(|&f| IsClipboardFormatAvailable(f as u32) != 0) {
             Kind::NonText
         } else {
-            // Emptied, or a delayed-render writer that hasn't listed formats yet.
+            // Emptied, or a writer whose text isn't listed yet: OLE data objects (.NET's
+            // Clipboard.SetText, Office) can show up without CF_UNICODETEXT at notification
+            // time, so the read at trigger time decides (`read_text_with_retry`).
             Kind::Unknown
         }
     };
