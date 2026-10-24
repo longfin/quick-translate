@@ -59,8 +59,8 @@ wayland-client = "0.31"
 wayland-protocols = { version = "0.32", features = ["client", "staging"] }
 wayland-protocols-wlr = { version = "0.3", features = ["client"] }
 
-# macOS preview build (the shipped macOS app is still the Swift one): pasteboard watcher and the
-# non-activating NSPanel that keeps the frontmost app's focus, like the Swift panel.
+# macOS: pasteboard watcher and the non-activating NSPanel that keeps the frontmost app's focus,
+# like the Swift panel did.
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"
 objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSPasteboard", "NSResponder", "NSApplication"] }

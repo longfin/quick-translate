@@ -1,4 +1,4 @@
-//! Source language detection, ported from `macos/Sources/QuickTranslate/LanguageDetector.swift`.
+//! Source language detection, ported from the Swift app's `LanguageDetector.swift`.
 //!
 //! The Swift app uses `NLLanguageRecognizer`; here a Unicode-script count decides every non-Latin
 //! script (as in Swift, which trusts the script first), and the `whatlang` trigram model, limited

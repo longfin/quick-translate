@@ -1,5 +1,5 @@
-// UI strings. The catalogs are generated from the macOS app's Localizable.strings
-// (`pnpm strings:json`); keys are the English strings, as in the Swift app.
+// UI strings from the catalogs in `locales/*.json` (checked by `pnpm strings:check`); keys are the
+// English strings.
 import en from "./locales/en.json";
 import ja from "./locales/ja.json";
 import ko from "./locales/ko.json";

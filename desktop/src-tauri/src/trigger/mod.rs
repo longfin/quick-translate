@@ -2,7 +2,7 @@
 //!
 //! - **Double copy** (default): the clipboard changes twice within the double-press interval
 //!   (400 ms, like `doublePressInterval` in the Swift app). Port of
-//!   `macos/Sources/QuickTranslate/PasteboardWatcher.swift`, but event-driven where the platform
+//!   the Swift app's `PasteboardWatcher.swift`, but event-driven where the platform
 //!   allows it. The platform backends only report "the clipboard changed" ([`Change`]); the
 //!   state machine ([`DoubleCopy`]) and the text read live here.
 //!   - Windows: `AddClipboardFormatListener` / `WM_CLIPBOARDUPDATE` ([`windows`]).

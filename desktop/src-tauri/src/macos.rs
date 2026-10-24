@@ -1,10 +1,7 @@
-//! macOS preview build: the translation window as a non-activating `NSPanel`, like the Swift
+//! macOS: the translation window as a non-activating `NSPanel`, like the Swift
 //! app's `.nonactivatingPanel` style. Showing it does not activate the app, so the frontmost app
 //! keeps its focus and its menu bar; the panel still becomes key, so Esc / Cmd+W reach it and a
 //! click elsewhere takes the key status away ("close when clicking outside").
-//!
-//! The shipped macOS app is still the Swift one in `macos/`; this exists so the Tauri app can be
-//! tried on a Mac as a preview (see the README).
 
 use tauri::{AppHandle, Manager, Runtime};
 use tauri_nspanel::{

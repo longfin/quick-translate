@@ -1,13 +1,11 @@
-# QuickTranslate for Windows and Linux
+# QuickTranslate (desktop/)
 
-A Tauri 2 tray app that brings QuickTranslate to Windows and Linux. The macOS app in
-[`../macos`](../macos) is still the native Swift one; both apps share the same design but no code.
-The plan and its progress are tracked in [#3](https://github.com/longfin/quick-translate/issues/3).
+The QuickTranslate app for macOS, Windows and Linux, built with Tauri 2. It replaced the native
+Swift macOS app ([#20](https://github.com/longfin/quick-translate/issues/20)); the original plan
+for Windows and Linux is [#3](https://github.com/longfin/quick-translate/issues/3).
 
-**Status: feature complete for a first release (0.1.0).** Tray, triggers, engine, translation
-panel, language detection, the shared string catalogs, the Settings window, packaging and the
-release workflow are in place. User-facing docs (requirements, install, Wayland, troubleshooting)
-are in the root [README](../README.md#windows--linux); changes in [CHANGELOG.md](CHANGELOG.md).
+User-facing docs (requirements, install, Wayland, troubleshooting) are in the root
+[README](../README.md); changes in [CHANGELOG.md](CHANGELOG.md).
 
 ## Layout
 
@@ -23,12 +21,14 @@ src-tauri/
   src/engine/   claude / codex CLI engine (Phase 1)
   src/trigger/  Ctrl+C Ctrl+C, hotkey (Phase 2)
   src/panel.rs  translation panel: placement near the cursor, pin, languages (Phase 3)
+  src/macos.rs  the translation window as a non-activating NSPanel (macOS)
+  Info.plist    LSUIElement (menu bar only), merged into the macOS bundle
   icons/        app icons (full colour) and tray.svg -> tray-{32,64}.png (monochrome tray glyph)
 scripts/
   linux-smoke.sh       headless smoke test (Xvfb), run in CI
   build-tray-icons.sh  renders icons/tray.svg
   gnome-headless/      headless GNOME Shell sessions for checking the tray by hand
-tools/          strings-to-json (the macOS .strings -> src/locales/*.json)
+tools/          check-locales (src/locales/*.json have the same keys and placeholders)
 ```
 
 ## Prerequisites
@@ -42,8 +42,8 @@ tools/          strings-to-json (the macOS .strings -> src/locales/*.json)
     libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev
   ```
   On GNOME, the tray icon needs the AppIndicator extension.
-- **macOS**: Xcode Command Line Tools. macOS isn't a release target; the app builds and runs
-  there for development and as a [preview](#macos-preview).
+- **macOS**: Xcode Command Line Tools; for the universal bundle also
+  `rustup target add x86_64-apple-darwin aarch64-apple-darwin`.
 
 See also Tauri's [prerequisites](https://v2.tauri.app/start/prerequisites/).
 
@@ -56,8 +56,8 @@ pnpm tauri dev      # run with the Vite dev server; Rust changes rebuild automat
 pnpm tauri build    # release build + bundles in src-tauri/target/release/bundle/
 ```
 
-Bundles: NSIS installer on Windows, AppImage and `.deb` on Linux (`--bundles nsis` etc. to pick
-one). CI is described under [Release](#release).
+Bundles: NSIS installer on Windows, AppImage and `.deb` on Linux, `.app` on macOS (`--bundles nsis`
+etc. to pick one; `--target universal-apple-darwin` for an arm64 + x86_64 `.app`). CI is described under [Release](#release).
 
 The app has no window at startup and no taskbar entry; look for the tray icon. Launching it a
 second time does not start another copy: the running instance logs the second launch's arguments.
@@ -71,8 +71,8 @@ clipboard" and `quicktranslate --translate` (sent to the running instance) all e
 …`): Windows clipboard listener, X11 XFixes, Wayland data-control (wlroots, KDE), XWayland, or
 `Unsupported` (e.g. GNOME on Wayland without XWayland: use the tray item or the hotkey).
 
-The hotkey translates what is already on the clipboard; unlike the macOS app it doesn't copy the
-selection first yet.
+The hotkey translates what is already on the clipboard; unlike the old Swift app it doesn't copy
+the selection first yet.
 
 To regenerate the icons from `docs/icon-1024.png`, run `pnpm tauri icon ../docs/icon-1024.png`,
 then delete the generated `android/`, `ios/`, `Square*Logo.png` and `StoreLogo.png`, which aren't
@@ -87,11 +87,11 @@ is no portable way to ask a panel for its colour.
 
 Esc or Ctrl+W (Cmd+W on macOS) hides it and cancels the translation; Ctrl+Enter retranslates.
 Unpinned, it hides when it loses focus ("close when clicking outside"), except while a
-translation is still streaming, like the macOS app. Pinned, it stays on top and stays open. A
+translation is still streaming, like the Swift app did. Pinned, it stays on top and stays open. A
 trigger while the panel is visible replaces the text and restarts the translation in place.
 
 The target language comes from `targetLanguage` / `fallbackLanguage` in the settings when set,
-else from the system languages (same rule as the macOS app); text already in the target
+else from the system languages (same rule as the Swift app); text already in the target
 language goes to the fallback.
 
 ## Settings
@@ -104,8 +104,9 @@ is saved and applied at once; Esc or Ctrl+W closes the window.
 
 They are stored as JSON in `<config dir>/dev.longfin.quicktranslate/settings.json`
 (`%APPDATA%\dev.longfin.quicktranslate\settings.json` on Windows,
-`~/.config/dev.longfin.quicktranslate/settings.json` on Linux), with the macOS app's
-`UserDefaults` keys:
+`~/.config/dev.longfin.quicktranslate/settings.json` on Linux,
+`~/Library/Application Support/dev.longfin.quicktranslate/settings.json` on macOS), with the Swift
+app's `UserDefaults` keys:
 
 | Key | Default | |
 | --- | --- | --- |
@@ -116,60 +117,41 @@ They are stored as JSON in `<config dir>/dev.longfin.quicktranslate/settings.jso
 | `targetLanguage` / `fallbackLanguage` | unset | unset = from the system languages |
 | `uiLanguage` | `"system"` | `"en"`, `"ko"`, `"ja"`; applies without a restart |
 | `hotkeyDoublePress` | `true` | `true` = Ctrl+C Ctrl+C, `false` = the `hotkey` |
-| `hotkey` | `"Ctrl+Shift+T"` | desktop only (the Swift app stores macOS key codes) |
+| `hotkey` | `"Ctrl+Shift+T"` | desktop only (the Swift app stored macOS key codes) |
 | `doublePressInterval` | `0.4` | seconds, 0.2–1.0 |
 | `closeOnOutsideClick` | `true` | |
-| `launchAtLogin` | `false` | desktop only; the HKCU `Run` key / `~/.config/autostart/QuickTranslate.desktop` wins when they differ |
+| `launchAtLogin` | `false` | desktop only; the HKCU `Run` key / `~/.config/autostart/QuickTranslate.desktop` / the LaunchAgent wins when they differ |
 
 A value of the wrong type falls back to its default; unknown keys are kept. The running app
 also notices when the file is edited by hand (within a second) and applies it.
 
 ## Localization
 
-UI strings are shared with the macOS app: they live in
-[`macos/Resources/*.lproj/Localizable.strings`](../macos/Resources) (English, Korean, Japanese),
-keyed by the English text. Strings only the desktop app uses sit in their own section at the end of
-each file. After editing them, run
+UI strings live in [`src/locales/`](src/locales) (English, Korean, Japanese), keyed by the English
+text; en.json lists every key. Strings were carried over from the Swift app's `Localizable.strings`,
+so some (Accessibility, Secure Keyboard Entry) are not used by this app. After editing them, run
 
 ```bash
-pnpm strings:json   # regenerates src/locales/{en,ko,ja}.json; commit the result
+pnpm strings:check   # also part of `pnpm build`
 ```
 
-It fails, listing the keys, when Korean or Japanese lacks a string (`--allow-missing` falls back to
-English). In the UI, `t("English text", { name: value })` from `src/i18n.ts` looks a string up.
+It fails, listing the keys, when Korean or Japanese lacks a string or a placeholder (`%@`, `%d`, …)
+differs. In the UI, `t("English text", { name: value })` from `src/i18n.ts` looks a string up.
 
-## macOS preview
-
-The shipped macOS app is still the Swift one, but the Tauri app builds a usable macOS preview to
-compare the two (issue [#3](https://github.com/longfin/quick-translate/issues/3) keeps the option
-of retiring the Swift app open). It is **not** a release artifact.
-
-```bash
-rustup target add x86_64-apple-darwin aarch64-apple-darwin
-cd desktop && pnpm install
-pnpm tauri build --bundles app --target universal-apple-darwin
-# → src-tauri/target/universal-apple-darwin/release/bundle/macos/QuickTranslate.app
-```
-
-CI builds the same thing when the desktop workflow is run by hand with "Also build the macOS
-preview .app" ticked (artifact `preview-macos-universal`, a zipped `.app`; `release.yml` ignores
-it). The bundle is universal (arm64 + x86_64) and ad-hoc signed (`signingIdentity: "-"`), so it
-runs locally; a downloaded copy needs `xattr -d com.apple.quarantine` or a Developer ID build.
-
-What the preview does on macOS:
+## macOS
 
 - Menu-bar-only app (`LSUIElement`, `ActivationPolicy::Accessory`), template tray glyph.
 - The translation window is a non-activating `NSPanel` ([tauri-nspanel](https://crates.io/crates/tauri-nspanel)):
   showing it keeps the frontmost app's focus and menu bar; Esc / Cmd+W and "close when clicking
   outside" still work because the panel becomes key. It floats on every Space.
 - Cmd+C Cmd+C through a 60 ms `NSPasteboard.changeCount` poll (the pasteboard has no change
-  notification), the hotkey, "Run at startup" (LaunchAgent) and the Settings window all work.
-- Its bundle id is `dev.longfin.quicktranslate` (the Swift app is `dev.swen.QuickTranslate`), so
-  both can be installed, but both react to Cmd+C Cmd+C: quit one while trying the other. Settings
-  are separate too (`~/Library/Application Support/dev.longfin.quicktranslate/settings.json`).
-- Not reproduced from the Swift app: the native title bar / toolbar chrome (#2); the panel is the
-  same undecorated window as on Windows and Linux. Memory sits around 4× the Swift app's idle
-  footprint (WebKit helper processes).
+  notification); the hotkey through the system hot key API. No Accessibility permission.
+- The bundle is universal (arm64 + x86_64) and ad-hoc signed (`signingIdentity: "-"`), minimum
+  macOS 13. A downloaded copy needs `xattr -d com.apple.quarantine` until there is a Developer ID
+  build.
+- Bundle id `dev.longfin.quicktranslate` (the Swift app was `dev.swen.QuickTranslate`).
+- Not reproduced from the Swift app: the native title bar / toolbar chrome (#2). Memory sits around
+  4× the Swift app's idle footprint (WebKit helper processes).
 
 ## Cross-building for Windows from macOS
 
@@ -200,13 +182,13 @@ after the first SDK download. NSIS/MSI installers still need Windows; CI produce
 
 ## Logs
 
-Timestamped lines, appended, in the same format as the macOS app:
+Timestamped lines, appended, in the same format as the Swift app:
 
 | OS | Path |
 | --- | --- |
 | Windows | `%LOCALAPPDATA%\QuickTranslate\QuickTranslate.log` |
 | Linux | `$XDG_STATE_HOME/QuickTranslate/QuickTranslate.log` (default `~/.local/state/QuickTranslate/QuickTranslate.log`) |
-| macOS (dev only) | `~/Library/Logs/QuickTranslate-desktop.log` |
+| macOS | `~/Library/Logs/QuickTranslate.log` |
 
 The same lines also go to stderr, so they show up in the `pnpm tauri dev` terminal.
 
@@ -218,6 +200,7 @@ The same lines also go to stderr, so they show up in the `pnpm tauri dev` termin
 | Windows ARM64 | `windows-11-arm` | `QuickTranslate-<v>-windows-arm64-setup.exe`, `…-windows-arm64-portable.zip` |
 | Linux x86_64 | `ubuntu-22.04` | `QuickTranslate-<v>-linux-x86_64.AppImage`, `QuickTranslate_<v>_amd64.deb` |
 | Linux aarch64 | `ubuntu-22.04-arm` | `QuickTranslate-<v>-linux-aarch64.AppImage`, `QuickTranslate_<v>_arm64.deb` |
+| macOS universal | `macos-latest` | `QuickTranslate-<v>-macos-universal.app.zip` (zipped `.app`, `lipo` and `codesign --verify` checked) |
 
 CI builds are native (no cross-compiling; for a local Windows exe from a Mac see
 [Cross-building](#cross-building-for-windows-from-macos)). Linux builds on Ubuntu 22.04 so the bundles run on
@@ -229,12 +212,12 @@ package is called `quick-translate` and depends on `libayatana-appindicator3-1`,
   [`scripts/linux-smoke.sh`](scripts/linux-smoke.sh) on both Linux runners and uploads one artifact
   per platform with the names above.
 - [`desktop.yml`](../.github/workflows/desktop.yml) runs it for pushes to `main` and pull requests
-  (Windows x64 and Linux x86_64 only, to stay fast) and for "Run workflow" (all four).
+  (Windows x64, Linux x86_64 and macOS, to stay fast) and for "Run workflow" (all five).
 - [`release.yml`](../.github/workflows/release.yml) runs on a `desktop-v<version>` tag: checks that
-  the tag matches the version in `package.json`, `tauri.conf.json` and `Cargo.toml`, builds all four,
+  the tag matches the version in `package.json`, `tauri.conf.json` and `Cargo.toml`, builds all five,
   and creates a **draft** GitHub release with the bundles, `SHA256SUMS` and the notes from
   [`.github/desktop-release-notes.md`](../.github/desktop-release-notes.md). Steps in
-  [CONTRIBUTING](../CONTRIBUTING.md#releasing-the-desktop-app).
+  [CONTRIBUTING](../CONTRIBUTING.md#releasing).
 
-The builds are **not code-signed**: Windows SmartScreen asks for "More info → Run anyway", and the
-release notes say so. Signing, winget and Flathub are for later.
+The builds are **not code-signed**: Windows SmartScreen asks for "More info → Run anyway", macOS
+needs the quarantine flag cleared, and the release notes say so. Signing, winget and Flathub are for later.

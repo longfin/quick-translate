@@ -1,5 +1,5 @@
 //! UI strings on the Rust side (tray menu, window titles), from the same catalogs as the web UI
-//! (`src/locales/*.json`, generated from the macOS `Localizable.strings` by `pnpm strings:json`).
+//! (`src/locales/*.json`).
 
 use std::collections::HashMap;
 use std::sync::OnceLock;

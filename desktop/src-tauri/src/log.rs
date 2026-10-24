@@ -1,11 +1,10 @@
-//! Append-only, timestamped log file. Mirrors `macos/Sources/QuickTranslate/Log.swift`:
+//! Append-only, timestamped log file, in the format the Swift app used:
 //! one `yyyy-MM-dd HH:mm:ss.SSS message` line per call, also echoed to stderr.
 //!
 //! Location:
 //! - Windows: `%LOCALAPPDATA%\QuickTranslate\QuickTranslate.log`
 //! - Linux:   `$XDG_STATE_HOME/QuickTranslate/QuickTranslate.log` (default `~/.local/state/...`)
-//! - macOS (dev builds only): `~/Library/Logs/QuickTranslate-desktop.log`, so it never mixes
-//!   with the Swift app's `QuickTranslate.log`.
+//! - macOS:   `~/Library/Logs/QuickTranslate.log` (where the Swift app logged too)
 
 use std::fs::{self, File, OpenOptions};
 use std::io::Write;
@@ -27,7 +26,7 @@ fn resolve_path() -> Option<PathBuf> {
     let path = env_dir("LOCALAPPDATA").map(|d| d.join("QuickTranslate").join("QuickTranslate.log"));
 
     #[cfg(target_os = "macos")]
-    let path = env_dir("HOME").map(|h| h.join("Library/Logs/QuickTranslate-desktop.log"));
+    let path = env_dir("HOME").map(|h| h.join("Library/Logs/QuickTranslate.log"));
 
     #[cfg(not(any(target_os = "windows", target_os = "macos")))]
     let path = env_dir("XDG_STATE_HOME")

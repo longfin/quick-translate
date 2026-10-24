@@ -54,7 +54,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "appimage", "deb"],
+    "targets": ["nsis", "appimage", "deb", "app"],
     "category": "Utility",
     "shortDescription": "Select text, press Ctrl+C twice, get a translation",
     "longDescription": "A tray app: select text, press Ctrl+C twice and a translation pops up next to the cursor. It uses the claude (Claude Code) or codex CLI you already have installed and logged in.",

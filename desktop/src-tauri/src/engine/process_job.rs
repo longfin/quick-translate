@@ -1,4 +1,4 @@
-//! Child processes for the CLIs. Port of `macos/Sources/QuickTranslate/ProcessJob.swift`, plus the
+//! Child processes for the CLIs. Port of the Swift app's `ProcessJob.swift`, plus the
 //! process-tree handling the Swift app never needed.
 //!
 //! Every child gets piped UTF-8 stdio, the augmented `PATH` from `cli_locator`, and is started so
