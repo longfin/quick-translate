@@ -1,5 +1,5 @@
 //! Translation engine (Phase 1, issue #3), ported 1:1 in behaviour from
-//! `macos/Sources/QuickTranslate/`:
+//! the Swift app (`macos/`, removed in #20; see `git show 571b51a:macos/Sources/QuickTranslate`):
 //! - `cli_locator`: find `claude` / `codex` (npm shims, native installers, version managers).
 //! - `process_job`: spawn with piped UTF-8 stdio, stream lines, kill the whole tree on cancel.
 //! - `claude_worker`: resident stream-json process, prewarm, `/clear` between turns.

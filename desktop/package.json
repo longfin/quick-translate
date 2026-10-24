@@ -6,9 +6,9 @@
   "packageManager": "pnpm@10.7.0",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "node tools/check-locales.mjs && tsc && vite build",
     "check": "tsc --noEmit",
-    "strings:json": "node tools/strings-to-json.mjs",
+    "strings:check": "node tools/check-locales.mjs",
     "tauri": "tauri"
   },
   "dependencies": {

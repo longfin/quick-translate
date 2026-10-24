@@ -1,4 +1,4 @@
-//! Finds the `claude` / `codex` CLIs. Port of `macos/Sources/QuickTranslate/CLILocator.swift`.
+//! Finds the `claude` / `codex` CLIs. Port of the Swift app's `CLILocator.swift`.
 //!
 //! Apps started from a desktop launcher (or at login) get a minimal `PATH`, so we probe the usual
 //! install locations of each platform first and only then ask the system (`where.exe` on Windows,
@@ -155,7 +155,7 @@ pub fn candidate_dirs() -> Vec<PathBuf> {
     dirs
 }
 
-/// macOS is only a development target for this app; same list as the Swift app.
+/// macOS: same list as the Swift app had.
 #[cfg(target_os = "macos")]
 pub fn candidate_dirs() -> Vec<PathBuf> {
     let home = home();

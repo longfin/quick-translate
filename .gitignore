@@ -1,6 +1,3 @@
-.build/
-build/
-*.xcodeproj
 .DS_Store
 
 # desktop/ (Tauri)

@@ -1,5 +1,5 @@
 //! A resident `claude -p --input-format stream-json` process. Port of
-//! `macos/Sources/QuickTranslate/ClaudeWorker.swift`.
+//! the Swift app's `ClaudeWorker.swift`.
 //!
 //! Keeping it alive skips the CLI startup and keeps the HTTP connection and prompt cache warm. After
 //! every turn we send `/clear`, which resets the conversation locally (no API call), so each

@@ -1,5 +1,5 @@
 //! Talks to the locally installed `claude` (Claude subscription) or `codex` (ChatGPT
-//! subscription) CLI. Port of `macos/Sources/QuickTranslate/TranslationEngine.swift`: same
+//! subscription) CLI. Port of the Swift app's `TranslationEngine.swift`: same
 //! prompts, same arguments, same user-facing error messages.
 
 use std::path::{Path, PathBuf};

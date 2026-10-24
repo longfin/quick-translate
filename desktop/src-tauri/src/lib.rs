@@ -65,7 +65,7 @@ pub fn run() {
             }
         }))
         // Run at startup: HKCU Run key (Windows), XDG autostart `.desktop` (Linux), LaunchAgent
-        // (macOS preview).
+        // (macOS).
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .invoke_handler(handler())
         .setup(|app| {
@@ -76,7 +76,7 @@ pub fn run() {
                 log::path().map(|p| p.display().to_string()).unwrap_or_else(|| "none".into())
             ));
 
-            // macOS preview: no Dock icon, like the Swift app (`LSUIElement` in Info.plist covers
+            // macOS: no Dock icon, like the Swift app (`LSUIElement` in Info.plist covers
             // the launch itself), and the translation window becomes a non-activating NSPanel.
             #[cfg(target_os = "macos")]
             {

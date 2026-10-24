@@ -1,4 +1,4 @@
-//! The app settings: a port of `macos/Sources/QuickTranslate/Settings.swift` (`AppSettings`).
+//! The app settings: a port of the Swift app's `Settings.swift` (`AppSettings`).
 //!
 //! Stored as plain JSON (serde) in `<app config dir>/settings.json`. The keys are the Swift
 //! `UserDefaults` keys verbatim where the setting exists there; the desktop-only ones are

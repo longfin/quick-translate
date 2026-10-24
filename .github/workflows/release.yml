@@ -1,7 +1,7 @@
-# Desktop (Windows / Linux) release: pushing a tag `desktop-v<version>` builds all four
-# platforms and creates a *draft* GitHub release with the bundles and SHA256SUMS. Publish the
-# draft by hand after checking it. The tag must match the version in desktop/src-tauri/tauri.conf.json.
-# The macOS app is built and shipped separately (macos/build.sh).
+# Release: pushing a tag `desktop-v<version>` builds all five platforms (Windows x64 / ARM64,
+# Linux x86_64 / aarch64, macOS universal) and creates a *draft* GitHub release with the bundles
+# and SHA256SUMS. Publish the draft by hand after checking it. The tag must match the version in
+# desktop/src-tauri/tauri.conf.json.
 name: release
 
 on:
@@ -73,5 +73,5 @@ jobs:
             gh release upload "$TAG" dist/* --clobber
           else
             gh release create "$TAG" dist/* --draft --verify-tag \
-              --title "QuickTranslate for Windows & Linux $VERSION" --notes-file notes.md
+              --title "QuickTranslate $VERSION" --notes-file notes.md
           fi

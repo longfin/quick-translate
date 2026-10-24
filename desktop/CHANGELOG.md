@@ -1,7 +1,7 @@
-# Changelog: QuickTranslate for Windows and Linux
+# Changelog: QuickTranslate
 
-The `desktop/` app only; the macOS app is versioned separately. Releases are tagged
-`desktop-v<version>` ([`release.yml`](../.github/workflows/release.yml)).
+The `desktop/` app for macOS, Windows and Linux. Releases are tagged `desktop-v<version>`
+([`release.yml`](../.github/workflows/release.yml)).
 
 ## Unreleased (0.1.0)
 
@@ -26,5 +26,8 @@ First release, planned in [#3](https://github.com/longfin/quick-translate/issues
 - **Phase 7, packaging**: NSIS installer and portable zip (Windows x64 and ARM64), AppImage and
   `.deb` (Linux x86_64 and aarch64), a release workflow with SHA256SUMS, a monochrome tray icon,
   a headless Linux smoke test in CI, and docs.
-- **macOS preview** (not a release artifact): universal, ad-hoc signed `.app` with a
-  non-activating `NSPanel`, built with `--target universal-apple-darwin` or the opt-in CI job.
+- **macOS**: universal, ad-hoc signed `.app` with a non-activating `NSPanel`, menu bar only;
+  built on every CI run and attached to releases. It replaces the Swift app, which is removed
+  from the repository ([#20](https://github.com/longfin/quick-translate/issues/20)); the log moves
+  to `~/Library/Logs/QuickTranslate.log`, and the UI strings now live in `src/locales/*.json`
+  (checked by `pnpm strings:check`).

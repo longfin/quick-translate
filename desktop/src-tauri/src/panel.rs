@@ -1,6 +1,6 @@
 //! The translation panel (Phase 3, issue #3): the pre-created hidden `panel` window
 //! (`tauri.conf.json`), shown near the cursor for every trigger. Port of
-//! `macos/Sources/QuickTranslate/TranslationPanel.swift` and the language rules of
+//! the Swift app's `TranslationPanel.swift` and the language rules of
 //! `TranslationViewModel.swift`.
 //!
 //! The panel's state (text, languages, pin) lives here; the web UI (`src/main.ts`) renders it.
@@ -323,7 +323,7 @@ fn show_window<R: Runtime>(app: &AppHandle<R>, started: Instant) {
     if !visible {
         position_near_cursor(app, &w);
     }
-    // macOS preview: the NSPanel floats on its own level and is shown without activating the
+    // macOS: the NSPanel floats on its own level and is shown without activating the
     // app (`set_focus` would). Elsewhere, raise above whatever has focus (Windows refuses a
     // plain SetForegroundWindow from a background process), then keep "always on top" only
     // while pinned.

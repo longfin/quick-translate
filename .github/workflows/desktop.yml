@@ -1,6 +1,6 @@
-# CI for desktop/: Windows x64 and Linux x86_64 on pushes and pull requests (with the Linux smoke
-# test); all four platforms (plus Windows ARM64 and Linux aarch64) when run by hand. Tagged
-# releases go through release.yml.
+# CI for desktop/: Windows x64, Linux x86_64 and macOS (universal) on pushes and pull requests
+# (with the Linux smoke test); all five platforms (plus Windows ARM64 and Linux aarch64) when run
+# by hand. Tagged releases go through release.yml.
 name: desktop
 
 on:
@@ -14,11 +14,6 @@ on:
       - "desktop/**"
       - ".github/workflows/desktop*.yml"
   workflow_dispatch:
-    inputs:
-      macos_preview:
-        description: "Also build the macOS preview .app"
-        type: boolean
-        default: false
 
 concurrency:
   group: desktop-${{ github.ref }}
@@ -32,4 +27,3 @@ jobs:
     uses: ./.github/workflows/desktop-build.yml
     with:
       full: ${{ github.event_name == 'workflow_dispatch' }}
-      macos_preview: ${{ github.event_name == 'workflow_dispatch' && inputs.macos_preview || false }}

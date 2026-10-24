@@ -7,11 +7,7 @@ on:
   workflow_call:
     inputs:
       full:
-        description: "All four platforms; otherwise only Windows x64 and Linux x86_64"
-        type: boolean
-        default: false
-      macos_preview:
-        description: "Also build the macOS preview .app (universal, ad-hoc signed; not a release artifact)"
+        description: "All five platforms; otherwise only Windows x64, Linux x86_64 and macOS"
         type: boolean
         default: false
 
@@ -27,25 +23,20 @@ jobs:
       - id: matrix
         env:
           FULL: ${{ inputs.full }}
-          MACOS_PREVIEW: ${{ inputs.macos_preview }}
         run: |
           # name: artifact suffix and file name part; os: runner (all native, no cross-compiling).
           # Linux builds on 22.04 so the AppImage and .deb run on glibc 2.35 and newer.
           all='[
-            {"name": "windows-x64",   "os": "windows-latest"},
-            {"name": "linux-x86_64",  "os": "ubuntu-22.04",     "deb": "amd64"},
-            {"name": "windows-arm64", "os": "windows-11-arm"},
-            {"name": "linux-aarch64", "os": "ubuntu-22.04-arm", "deb": "arm64"}
+            {"name": "windows-x64",     "os": "windows-latest"},
+            {"name": "linux-x86_64",    "os": "ubuntu-22.04",     "deb": "amd64"},
+            {"name": "macos-universal", "os": "macos-latest"},
+            {"name": "windows-arm64",   "os": "windows-11-arm"},
+            {"name": "linux-aarch64",   "os": "ubuntu-22.04-arm", "deb": "arm64"}
           ]'
           if [ "$FULL" = true ]; then
             include="$all"
           else
-            include="$(jq -c '[.[] | select(.name == "windows-x64" or .name == "linux-x86_64")]' <<<"$all")"
-          fi
-          # The macOS preview is opt-in: the shipped macOS app is the Swift one, and its artifact
-          # name deliberately does not match release.yml's `quicktranslate-*` pattern.
-          if [ "$MACOS_PREVIEW" = true ]; then
-            include="$(jq -c '. + [{"name": "macos-universal", "os": "macos-latest", "preview": true}]' <<<"$include")"
+            include="$(jq -c '[.[] | select(.name == "windows-x64" or .name == "linux-x86_64" or .name == "macos-universal")]' <<<"$all")"
           fi
           echo "include=$(jq -c . <<<"$include")" >> "$GITHUB_OUTPUT"
 
@@ -125,7 +116,7 @@ jobs:
             app="$(one src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app)"
             lipo -archs "$app/Contents/MacOS/quicktranslate"
             codesign --verify --strict "$app"
-            ditto -c -k --keepParent "$app" "$out/$base-preview.app.zip"
+            ditto -c -k --keepParent "$app" "$out/$base.app.zip"
           elif [ "$RUNNER_OS" = Windows ]; then
             cp "$(one "$bundle"/nsis/*-setup.exe)" "$out/$base-setup.exe"
             portable="../portable/$base"
@@ -141,6 +132,6 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.preview && 'preview' || 'quicktranslate' }}-${{ matrix.name }}
+          name: quicktranslate-${{ matrix.name }}
           if-no-files-found: error
           path: dist-release/*

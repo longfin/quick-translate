@@ -1,6 +1,5 @@
-//! macOS (preview build and development): the shipped macOS app is still the Swift one in
-//! `macos/`. Polls `NSPasteboard.changeCount` every 60 ms, like `PasteboardWatcher.swift`; the
-//! pasteboard has no change notification.
+//! macOS: polls `NSPasteboard.changeCount` every 60 ms, like the Swift app's `PasteboardWatcher`;
+//! the pasteboard has no change notification.
 
 use std::time::Duration;
 
@@ -24,6 +23,6 @@ pub fn start(sink: Sink) {
         }
     });
     if let Err(e) = spawned {
-        crate::log::write(format!("trigger: could not spawn macOS dev watcher: {e}"));
+        crate::log::write(format!("trigger: could not spawn macOS watcher: {e}"));
     }
 }
